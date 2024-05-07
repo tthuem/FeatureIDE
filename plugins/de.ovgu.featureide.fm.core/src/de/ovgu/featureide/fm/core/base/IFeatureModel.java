@@ -189,6 +189,31 @@ public interface IFeatureModel extends Cloneable, IEventManager {
 	boolean addFeature(IFeature feature);
 
 	/**
+	 * Clones this feature model <code>f</code> to a new instance of feature model <code>f'</code>, such that <code>f != f'</code> and <code>f.equals(f')</code>
+	 * holds. More in detail: <ul> <li>Both feature model's unique identifiers are equal</li> <li>Both feature order lists are equal but their references aren't
+	 * identical</li> <li>Both feature order lists user defined order flag is equal</li> <li>Both feature order lists property and structure are equal, but
+	 * their references aren't identical</li> <li>Both feature model's source files are equal but their references aren't identical</li> <li>Both feature
+	 * model's feature structure (including their constraints) are equal but their references aren't identical</li> <li>The feature model <code>f'</code>'
+	 * feature model analyzer instance is a <i>new</i> instance</li> </ul>
+	 *
+	 * @since 3.0
+	 *
+	 * @see #getId()
+	 * @see #getFeatureOrderList()
+	 * @see #isFeatureOrderUserDefined()
+	 * @see #getStructure()
+	 * @see #getProperty()
+	 * @see #getSourceFile()
+	 * @see #getStructure()
+	 * @see #getConstraints()
+	 *
+	 * @return cloned instance of this model, such that the new instance is equal to this feature model but their references aren't identical
+	 */
+	default IFeatureModel clone() {
+		return clone(null, true);
+	}
+
+	/**
 	 * Clones this feature model <code>f</code>, such that a new instance <code>f'</code> is created. The cloned feature model <code>f'</code> must satisfy the
 	 * following properties to contain the same information as <code>f</code>: <ul> <li>the identifiers of <code>f</code> and <code>f'</code> must be
 	 * identical</li> <li>the feature order list of <code>f</code> and <code>f'</code> must be equal, but the references must be different</li> <li>the user
@@ -203,7 +228,9 @@ public interface IFeatureModel extends Cloneable, IEventManager {
 	 *
 	 * @since 3.0
 	 */
-	IFeatureModel clone(IFeature newRoot);
+	default IFeatureModel clone(IFeature newRoot) {
+		return clone(newRoot, true);
+	}
 
 	/**
 	 * Clones this feature model <code>f</code>, such that a new instance <code>f'</code> is created. The cloned feature model <code>f'</code> must satisfy the
@@ -221,7 +248,7 @@ public interface IFeatureModel extends Cloneable, IEventManager {
 	 * @see IFeatureModel#clone(IFeature)
 	 */
 	default IFeatureModel clone(boolean copyId) {
-		return clone(null);
+		return clone(null, copyId);
 	}
 
 	/**
@@ -241,9 +268,7 @@ public interface IFeatureModel extends Cloneable, IEventManager {
 	 *
 	 * @see IFeatureModel#clone(IFeature)
 	 */
-	default IFeatureModel clone(IFeature newRoot, boolean copyId) {
-		return clone(newRoot);
-	}
+	IFeatureModel clone(IFeature newRoot, boolean copyId);
 
 	/**
 	 * Resets this feature model to the default values. The parameter <code>projectName</code> will be used as the new root features name if there are no
@@ -661,29 +686,6 @@ public interface IFeatureModel extends Cloneable, IEventManager {
 	 * @since 3.0
 	 */
 	Map<String, IFeature> getFeatureTable();
-
-	/**
-	 * Clones this feature model <code>f</code> to a new instance of feature model <code>f'</code>, such that <code>f != f'</code> and <code>f.equals(f')</code>
-	 * holds. More in detail: <ul> <li>Both feature model's unique identifiers are equal</li> <li>Both feature order lists are equal but their references aren't
-	 * identical</li> <li>Both feature order lists user defined order flag is equal</li> <li>Both feature order lists property and structure are equal, but
-	 * their references aren't identical</li> <li>Both feature model's source files are equal but their references aren't identical</li> <li>Both feature
-	 * model's feature structure (including their constraints) are equal but their references aren't identical</li> <li>The feature model <code>f'</code>'
-	 * feature model analyzer instance is a <i>new</i> instance</li> </ul>
-	 *
-	 * @since 3.0
-	 *
-	 * @see #getId()
-	 * @see #getFeatureOrderList()
-	 * @see #isFeatureOrderUserDefined()
-	 * @see #getStructure()
-	 * @see #getProperty()
-	 * @see #getSourceFile()
-	 * @see #getStructure()
-	 * @see #getConstraints()
-	 *
-	 * @return cloned instance of this model, such that the new instance is equal to this feature model but their references aren't identical
-	 */
-	IFeatureModel clone();
 
 	/**
 	 * Replaces the feature order item at the specified position <code>i</code> in this feature model's feature order list with the specified element

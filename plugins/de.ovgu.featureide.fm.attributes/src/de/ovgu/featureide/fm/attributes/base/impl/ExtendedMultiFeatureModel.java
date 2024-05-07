@@ -26,7 +26,6 @@ import de.ovgu.featureide.fm.core.base.FeatureUtils;
 import de.ovgu.featureide.fm.core.base.IFeature;
 import de.ovgu.featureide.fm.core.base.IFeatureModelFactory;
 import de.ovgu.featureide.fm.core.base.impl.FMFactoryManager;
-import de.ovgu.featureide.fm.core.base.impl.FeatureModel;
 import de.ovgu.featureide.fm.core.base.impl.MultiFeatureModel;
 
 /**
@@ -40,8 +39,8 @@ public class ExtendedMultiFeatureModel extends MultiFeatureModel implements IExt
 
 	private IFeatureModelFactory factory;
 
-	public ExtendedMultiFeatureModel(ExtendedMultiFeatureModel copyFeatureModel, ExtendedMultiFeature newRoot) {
-		super(copyFeatureModel, newRoot);
+	public ExtendedMultiFeatureModel(ExtendedMultiFeatureModel copyFeatureModel, ExtendedMultiFeature newRoot, boolean copyId) {
+		super(copyFeatureModel, newRoot, copyId);
 
 		try {
 			factory = FMFactoryManager.getInstance().getFactory(factoryID);
@@ -104,7 +103,12 @@ public class ExtendedMultiFeatureModel extends MultiFeatureModel implements IExt
 	}
 
 	@Override
-	public FeatureModel clone() {
-		return new ExtendedMultiFeatureModel(this, null);
+	public ExtendedMultiFeatureModel clone() {
+		return new ExtendedMultiFeatureModel(this, null, true);
+	}
+
+	@Override
+	public ExtendedMultiFeatureModel clone(IFeature newRoot, boolean copyId) {
+		return new ExtendedMultiFeatureModel(this, (ExtendedMultiFeature) newRoot, copyId);
 	}
 }

@@ -140,8 +140,8 @@ public class MultiFeatureModel extends FeatureModel {
 		isInterface = false;
 	}
 
-	protected MultiFeatureModel(MultiFeatureModel extendedFeatureModel, IFeature newRoot) {
-		super(extendedFeatureModel, newRoot);
+	protected MultiFeatureModel(MultiFeatureModel extendedFeatureModel, IFeature newRoot, boolean copyId) {
+		super(extendedFeatureModel, newRoot, copyId);
 
 		integerAttributes = new FeatureAttributeMap<>(extendedFeatureModel.integerAttributes);
 		booleanAttributes = new FeatureAttributeMap<>(extendedFeatureModel.booleanAttributes);
@@ -412,8 +412,13 @@ public class MultiFeatureModel extends FeatureModel {
 	}
 
 	@Override
-	public FeatureModel clone() {
-		return new MultiFeatureModel(this, null);
+	public MultiFeatureModel clone() {
+		return new MultiFeatureModel(this, null, true);
+	}
+
+	@Override
+	public MultiFeatureModel clone(IFeature newRoot, boolean copyId) {
+		return new MultiFeatureModel(this, (MultiFeature) newRoot, copyId);
 	}
 
 }

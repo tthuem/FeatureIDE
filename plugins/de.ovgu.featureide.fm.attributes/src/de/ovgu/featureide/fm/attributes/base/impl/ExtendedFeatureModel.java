@@ -37,8 +37,8 @@ public class ExtendedFeatureModel extends FeatureModel implements IExtendedFeatu
 
 	IFeatureModelFactory factory;
 
-	public ExtendedFeatureModel(ExtendedFeatureModel copyFeatureModel, ExtendedFeature newRoot) {
-		super(copyFeatureModel, newRoot);
+	public ExtendedFeatureModel(ExtendedFeatureModel copyFeatureModel, ExtendedFeature newRoot, boolean copyId) {
+		super(copyFeatureModel, newRoot, copyId);
 
 		try {
 			factory = FMFactoryManager.getInstance().getFactory(factoryID);
@@ -87,7 +87,13 @@ public class ExtendedFeatureModel extends FeatureModel implements IExtendedFeatu
 	}
 
 	@Override
-	public FeatureModel clone() {
-		return new ExtendedFeatureModel(this, null);
+	public ExtendedFeatureModel clone() {
+		return new ExtendedFeatureModel(this, null, true);
 	}
+
+	@Override
+	public ExtendedFeatureModel clone(IFeature newRoot, boolean copyId) {
+		return new ExtendedFeatureModel(this, (ExtendedFeature) newRoot, copyId);
+	}
+
 }

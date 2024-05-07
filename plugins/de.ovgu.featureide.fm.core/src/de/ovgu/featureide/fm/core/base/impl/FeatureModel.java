@@ -532,16 +532,6 @@ public class FeatureModel implements IFeatureModel {
 	}
 
 	@Override
-	public FeatureModel clone(boolean copyId) {
-		return new FeatureModel(this, null, copyId);
-	}
-
-	@Override
-	public IFeatureModel clone(IFeature newRoot) {
-		return new FeatureModel(this, newRoot, true);
-	}
-
-	@Override
 	public IFeatureModel clone(IFeature newRoot, boolean copyId) {
 		return new FeatureModel(this, newRoot, copyId);
 	}
