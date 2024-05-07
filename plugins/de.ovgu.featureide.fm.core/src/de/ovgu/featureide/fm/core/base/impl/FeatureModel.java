@@ -112,10 +112,10 @@ public class FeatureModel implements IFeatureModel {
 		renamingsManager = new RenamingsManager(this);
 	}
 
-	protected FeatureModel(FeatureModel oldFeatureModel, IFeature newRoot) {
+	protected FeatureModel(FeatureModel oldFeatureModel, IFeature newRoot, boolean copyId) {
 		factoryID = oldFeatureModel.factoryID;
-		id = oldFeatureModel.id;
-		nextElementId = oldFeatureModel.nextElementId;
+		id = copyId ? oldFeatureModel.id : getNextId();
+		nextElementId = copyId ? oldFeatureModel.nextElementId : 0;
 		featureOrderList = new LinkedList<>(oldFeatureModel.featureOrderList);
 		featureOrderUserDefined = oldFeatureModel.featureOrderUserDefined;
 
@@ -129,16 +129,16 @@ public class FeatureModel implements IFeatureModel {
 		if (newRoot == null) {
 			final IFeatureStructure root = oldFeatureModel.getStructure().getRoot();
 			if (root != null) {
-				structure.setRoot(root.cloneSubtree(this));// structure.getRoot().cloneSubtree(this));
+				structure.setRoot(root.cloneSubtree(this, copyId));// structure.getRoot().cloneSubtree(this));
 				for (final IConstraint constraint : oldFeatureModel.constraints) {
-					constraints.add(constraint.clone(this));
+					constraints.add(constraint.clone(this, copyId));
 				}
 			}
 		} else {
-			structure.setRoot(newRoot.getStructure().cloneSubtree(this));
+			structure.setRoot(newRoot.getStructure().cloneSubtree(this, copyId));
 			for (final IConstraint constraint : oldFeatureModel.constraints) {
 				if (featureTable.keySet().containsAll(Functional.mapToStringList(constraint.getContainedFeatures()))) {
-					constraints.add(constraint.clone(this));
+					constraints.add(constraint.clone(this, copyId));
 				}
 			}
 		}
@@ -178,11 +178,6 @@ public class FeatureModel implements IFeatureModel {
 	@Override
 	public List<IEventListener> getListenerList() {
 		return eventManager.getListeners();
-	}
-
-	@Override
-	public IFeatureModel clone(IFeature newRoot) {
-		return new FeatureModel(this, newRoot);
 	}
 
 	@Override
@@ -533,7 +528,22 @@ public class FeatureModel implements IFeatureModel {
 
 	@Override
 	public FeatureModel clone() {
-		return new FeatureModel(this, null);
+		return new FeatureModel(this, null, true);
+	}
+
+	@Override
+	public FeatureModel clone(boolean copyId) {
+		return new FeatureModel(this, null, copyId);
+	}
+
+	@Override
+	public IFeatureModel clone(IFeature newRoot) {
+		return new FeatureModel(this, newRoot, true);
+	}
+
+	@Override
+	public IFeatureModel clone(IFeature newRoot, boolean copyId) {
+		return new FeatureModel(this, newRoot, copyId);
 	}
 
 	@Override

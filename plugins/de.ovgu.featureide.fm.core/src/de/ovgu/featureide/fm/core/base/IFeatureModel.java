@@ -206,6 +206,46 @@ public interface IFeatureModel extends Cloneable, IEventManager {
 	IFeatureModel clone(IFeature newRoot);
 
 	/**
+	 * Clones this feature model <code>f</code>, such that a new instance <code>f'</code> is created. The cloned feature model <code>f'</code> must satisfy the
+	 * following properties to contain the same information as <code>f</code>: <ul> <li>the identifiers of <code>f</code> and <code>f'</code> must be
+	 * identical</li> <li>the feature order list of <code>f</code> and <code>f'</code> must be equal, but the references must be different</li> <li>the user
+	 * defined feature order flag of <code>f</code> and <code>f'</code> must be identical</li> <li>the feature models properties must be equal but with
+	 * different references in <code>f</code> and <code>f'</code></li> <li>the feature models constraints must be equal but with different references in
+	 * <code>f</code> and <code>f'</code></li> <li>the cloned feature model <code>f'</code> must contain the structure behind <code>newRoot</code> but with
+	 * different references</li> </ul> Additionally, the following must hold <code>f != f'</code> and <code>f.equals(f')</code>.
+	 *
+	 * @param copyId if {@code true} f' and its features and constraints will have the same internal IDs as f and its features and constraints, if {@code false}
+	 *        f' will have a different ID than f, its features and constraints may share IDs with their original counter parts, but do not have to
+	 * @return A new equal instance of this feature model with different references
+	 *
+	 * @see IFeatureModel#clone(IFeature)
+	 */
+	default IFeatureModel clone(boolean copyId) {
+		return clone(null);
+	}
+
+	/**
+	 * Clones this feature model <code>f</code>, such that a new instance <code>f'</code> is created. The cloned feature model <code>f'</code> must satisfy the
+	 * following properties to contain the same information as <code>f</code>: <ul> <li>the identifiers of <code>f</code> and <code>f'</code> must be
+	 * identical</li> <li>the feature order list of <code>f</code> and <code>f'</code> must be equal, but the references must be different</li> <li>the user
+	 * defined feature order flag of <code>f</code> and <code>f'</code> must be identical</li> <li>the feature models properties must be equal but with
+	 * different references in <code>f</code> and <code>f'</code></li> <li>the feature models constraints must be equal but with different references in
+	 * <code>f</code> and <code>f'</code></li> <li>the cloned feature model <code>f'</code> must contain the structure behind <code>newRoot</code> but with
+	 * different references</li> <li>the cloned feature model <code>f'</code>'s root feature must be <code>newRoot</code></li> </ul> Additionally, the following
+	 * must hold <code>f != f'</code> and <code>f.equals(f')</code>.
+	 *
+	 * @param newRoot the new root feature including the entire structure of <code>newRoot</code> for the cloned model
+	 * @param copyId if {@code true} f' and its features and constraints will have the same internal IDs as f and its features and constraints, if {@code false}
+	 *        f' will have a different ID than f, its features and constraints may share IDs with their original counter parts, but do not have to
+	 * @return A new equal instance of this feature model with different references
+	 *
+	 * @see IFeatureModel#clone(IFeature)
+	 */
+	default IFeatureModel clone(IFeature newRoot, boolean copyId) {
+		return clone(newRoot);
+	}
+
+	/**
 	 * Resets this feature model to the default values. The parameter <code>projectName</code> will be used as the new root features name if there are no
 	 * features in this model (the <i>feature table</i> is empty). Independent of this, a new feature called <code>Base</code> will be added as child of the
 	 * feature models root feature, and the feature models root feature will be set as <i>abstract feature</i>.

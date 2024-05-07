@@ -58,7 +58,7 @@ public class TFeatureModel {
 		final IFeature root = fm.getFeature("test_root");
 		assertSame(root.getStructure(), fm.getStructure().getRoot());
 
-		final IFeatureModel clonedModel = fm.clone(null);
+		final IFeatureModel clonedModel = fm.clone();
 		final IFeature root2 = clonedModel.getFeature("test_root");
 
 		assertSame(root2.getStructure(), clonedModel.getStructure().getRoot());
@@ -117,7 +117,7 @@ public class TFeatureModel {
 		constraint.setDescription(originalDescription);
 		fm.addConstraint(constraint);
 
-		final IFeatureModel clonedModel = fm.clone(null);
+		final IFeatureModel clonedModel = fm.clone();
 
 		for (final IConstraint constraintClone : clonedModel.getConstraints()) {
 			final String descriptionCopy = constraintClone.getDescription();

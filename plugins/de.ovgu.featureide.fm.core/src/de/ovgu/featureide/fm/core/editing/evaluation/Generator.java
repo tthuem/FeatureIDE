@@ -143,7 +143,7 @@ public abstract class Generator {
 	}
 
 	public static IFeatureModel refactoring(IFeatureModel originalFM, long id, int numberOfEdits) {
-		final IFeatureModel fm = originalFM.clone(null);
+		final IFeatureModel fm = originalFM.clone();
 		final Random random = new Random(id);
 
 		for (int i = 0; i < numberOfEdits; i++) {
@@ -195,7 +195,7 @@ public abstract class Generator {
 	}
 
 	public static IFeatureModel generalization(IFeatureModel originalFM, long id, int numberOfEdits) {
-		final IFeatureModel fm = originalFM.clone(null);
+		final IFeatureModel fm = originalFM.clone();
 		final IFeatureModelFactory factory = FMFactoryManager.getInstance().getFactory(fm);
 		final Random random = new Random(id);
 
@@ -317,12 +317,12 @@ public abstract class Generator {
 
 	public static IFeatureModel arbitraryEdits(IFeatureModel originalFM, long id, int numberOfEdits) {
 		final boolean valid = FeatureModelManager.getAnalyzer(originalFM).isValid(null);
-		IFeatureModel fm = originalFM.clone(null);
+		IFeatureModel fm = originalFM.clone();
 		final IFeatureModelFactory factory = FMFactoryManager.getInstance().getFactory(fm);
 		final Random random = new Random(id);
 
 		for (int i = 0; i < numberOfEdits; i++) {
-			final IFeatureModel backup = valid ? fm.clone(null) : null;
+			final IFeatureModel backup = valid ? fm.clone() : null;
 
 			final List<IFeature> list = new LinkedList<>(Functional.toList(fm.getFeatures()));
 			final List<IFeature> randomizedList = new LinkedList<>();
