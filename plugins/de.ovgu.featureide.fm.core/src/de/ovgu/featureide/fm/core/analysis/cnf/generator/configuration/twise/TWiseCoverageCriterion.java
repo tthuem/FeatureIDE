@@ -29,6 +29,7 @@ import de.ovgu.featureide.fm.core.analysis.cnf.LiteralSet;
 import de.ovgu.featureide.fm.core.analysis.cnf.generator.configuration.twise.iterator.ICombinationIterator;
 import de.ovgu.featureide.fm.core.analysis.cnf.generator.configuration.twise.iterator.LexicographicIterator;
 import de.ovgu.featureide.fm.core.analysis.cnf.solver.AdvancedSatSolver;
+import de.ovgu.featureide.fm.core.analysis.cnf.solver.RuntimeContradictionException;
 
 /**
  * Tests whether a set of configurations achieves t-wise feature coverage.
@@ -43,6 +44,9 @@ public class TWiseCoverageCriterion implements CoverageCriterion {
 
 	public TWiseCoverageCriterion(CNF cnf, int t) {
 		util = new TWiseConfigurationUtil(new AdvancedSatSolver(cnf));
+		if (util.isUnsatisfiable()) {
+			throw new RuntimeContradictionException("CNF is unsatisfiable");
+		}
 		util.computeRandomSample();
 
 		presenceConditionManager = new PresenceConditionManager(util, TWiseConfigurationGenerator.convertLiterals(cnf.getVariables().getLiterals()));

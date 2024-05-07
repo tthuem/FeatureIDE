@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+	<featureModel>
+		<properties/>
+		<struct>
+			<and mandatory="true" name="Root">
+				<feature name="A"/>
+				<feature name="B"/>
+			</and>
+		</struct>
+		<constraints>
+			<rule>
+				<conj>
+					<var>A</var>
+					<not><var>A</var></not>
+				</conj>
+			</rule>
+		</constraints>
+		<calculations Auto="true" Constraints="true" Features="true" Redundant="true" Tautology="true"/>
+		<comments/>
+		<featureOrder userDefined="false"/>
+	</featureModel>

@@ -182,9 +182,14 @@ public class TWiseConfigurationGenerator extends AConfigurationGenerator impleme
 		this.initialSample = new ArrayList<>(initialSample);
 	}
 
-	private void init() {
+	@Override
+	protected void generate(IMonitor<List<LiteralSet>> monitor) throws Exception {
 		if (util == null) {
 			util = new TWiseConfigurationUtil(solver);
+			if (util.isUnsatisfiable()) {
+				bestResult = new ArrayList<>(0);
+				return;
+			}
 			util.setSolutionList(incompleteSolutionList);
 			util.setRandom(getRandom());
 			util.computeRandomSample();
@@ -205,12 +210,7 @@ public class TWiseConfigurationGenerator extends AConfigurationGenerator impleme
 		incompleteSolutionList.clear();
 		completeSolutionList.clear();
 
-		initialSample.forEach(c -> newInitialConfiguration(c));
-	}
-
-	@Override
-	protected void generate(IMonitor<List<LiteralSet>> monitor) throws Exception {
-		init();
+		initialSample.forEach(c1 -> newInitialConfiguration(c1));
 
 		phaseCount = 0;
 

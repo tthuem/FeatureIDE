@@ -59,6 +59,7 @@ public class TWiseConfigurationUtil {
 	private ModalImplicationGraph mig;
 	private int[] core;
 	private LiteralSet[] strongHull;
+	private boolean unsatisfiable;
 
 	private Random random = new Random(42);
 
@@ -114,7 +115,10 @@ public class TWiseConfigurationUtil {
 			System.out.print("Init graph... ");
 		}
 		mig = LongRunningWrapper.runMethod(new MIGBuilder(solver.getSatInstance(), false));
-
+		if (mig == null) {
+			unsatisfiable = true;
+			return;
+		}
 		core = mig.getAdjList().stream().filter(Vertex::isCore).mapToInt(Vertex::getVar).toArray();
 		solver.assignmentPushAll(core);
 
@@ -302,6 +306,10 @@ public class TWiseConfigurationUtil {
 
 	public void setRandom(Random random) {
 		this.random = random;
+	}
+
+	public boolean isUnsatisfiable() {
+		return unsatisfiable;
 	}
 
 }

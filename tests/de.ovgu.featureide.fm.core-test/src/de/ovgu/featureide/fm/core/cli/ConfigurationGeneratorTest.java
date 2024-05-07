@@ -46,6 +46,7 @@ import de.ovgu.featureide.fm.core.analysis.cnf.generator.configuration.RandomCon
 import de.ovgu.featureide.fm.core.analysis.cnf.generator.configuration.twise.SampleTester;
 import de.ovgu.featureide.fm.core.analysis.cnf.generator.configuration.twise.TWiseCoverageCriterion;
 import de.ovgu.featureide.fm.core.base.IFeatureModel;
+import de.ovgu.featureide.fm.core.io.ProblemList;
 import de.ovgu.featureide.fm.core.io.csv.ConfigurationListFormat;
 import de.ovgu.featureide.fm.core.io.manager.FeatureModelManager;
 import de.ovgu.featureide.fm.core.io.manager.FileHandler;
@@ -73,6 +74,11 @@ public class ConfigurationGeneratorTest {
 		testSize("simple", "all", 2);
 		testSize("car", "all", 7);
 		testSize("gpl_medium_model", "all", 960);
+	}
+
+	@Test
+	public void YASAHas0ConfigurationsForUnsatisfiableModel() {
+		testSize("unsatisfiable", "yasa", 0);
 	}
 
 	@Test
@@ -338,11 +344,15 @@ public class ConfigurationGeneratorTest {
 			final Path outFile = runSampleAlgorithm(modelFile, algorithm, additionalArgs);
 
 			final SolutionList sample = new SolutionList();
-			FileHandler.load(outFile, sample, new ConfigurationListFormat());
-
+			final ProblemList problemList = FileHandler.load(outFile, sample, new ConfigurationListFormat());
+			ProblemList errors = problemList.getErrors();
+			if (!errors.isEmpty()) {
+				fail(errors.get(0).toString());
+			}
 			final FileHandler<IFeatureModel> fileHandler = FeatureModelManager.getFileHandler(modelFile);
-			if (fileHandler.getLastProblems().containsError()) {
-				fail(fileHandler.getLastProblems().getErrors().get(0).error.getMessage());
+			errors = fileHandler.getLastProblems().getErrors();
+			if (!errors.isEmpty()) {
+				fail(errors.get(0).toString());
 			}
 			final CNF cnf = new FeatureModelFormula(fileHandler.getObject()).getCNF();
 

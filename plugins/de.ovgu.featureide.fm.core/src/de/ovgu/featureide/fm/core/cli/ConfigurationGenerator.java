@@ -155,7 +155,9 @@ public class ConfigurationGenerator extends ACLIFunction {
 			throw new IllegalArgumentException("No algorithm specified!");
 		}
 		final List<LiteralSet> result = LongRunningWrapper.runMethod(generator, new ConsoleMonitor<>());
-		SimpleFileHandler.save(outputFile, new SolutionList(cnf.getVariables(), result), new ConfigurationListFormat());
+		if (result != null) {
+			SimpleFileHandler.save(outputFile, new SolutionList(cnf.getVariables(), result), new ConfigurationListFormat());
+		}
 	}
 
 	private void resetArguments() {
@@ -167,7 +169,7 @@ public class ConfigurationGenerator extends ACLIFunction {
 		allowInitialSolutionModify = false;
 		allowInitialSolutionRemove = false;
 		countInitialSolutionForLimit = false;
-		t = 0;
+		t = 1;
 		m = 1;
 		limit = Integer.MAX_VALUE;
 	}
