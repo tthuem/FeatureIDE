@@ -26,6 +26,7 @@ import de.ovgu.featureide.fm.attributes.base.impl.ExtendedMultiFeatureModelFacto
 import de.ovgu.featureide.fm.attributes.format.UVLExtendedFeatureModelFormat;
 import de.ovgu.featureide.fm.attributes.format.XmlExtendedConfFormat;
 import de.ovgu.featureide.fm.attributes.format.XmlExtendedFeatureModelFormat;
+import de.ovgu.featureide.fm.core.Logger;
 import de.ovgu.featureide.fm.core.base.impl.ConfigFormatManager;
 import de.ovgu.featureide.fm.core.base.impl.ConfigurationFactoryManager;
 import de.ovgu.featureide.fm.core.base.impl.FMFactoryManager;
@@ -53,7 +54,11 @@ public class FMAttributesLibrary implements ILibrary {
 	@Override
 	public void install() {
 		FMFormatManager.getInstance().addExtension(new XmlExtendedFeatureModelFormat());
-		FMFormatManager.getInstance().addExtension(new UVLExtendedFeatureModelFormat());
+		try {
+			FMFormatManager.getInstance().addExtension(new UVLExtendedFeatureModelFormat());
+		} catch (NoClassDefFoundError e) {
+			Logger.logWarning("WARNING: Could not load Extended UVL format.");
+		}
 		FMFactoryManager.getInstance().addExtension(ExtendedFeatureModelFactory.getInstance());
 		FMFactoryManager.getInstance().addExtension(ExtendedMultiFeatureModelFactory.getInstance());
 		ConfigFormatManager.getInstance().addExtension(new XmlExtendedConfFormat());

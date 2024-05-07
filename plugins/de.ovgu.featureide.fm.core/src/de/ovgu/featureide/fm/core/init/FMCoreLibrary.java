@@ -78,12 +78,20 @@ public final class FMCoreLibrary implements ILibrary {
 		FMFactoryManager.getInstance().setWorkspaceLoader(new CoreFactoryWorkspaceLoader());
 
 		FMFormatManager.getInstance().addExtension(new XmlFeatureModelFormat());
-		FMFormatManager.getInstance().addExtension(new SimpleVelvetFeatureModelFormat());
+		try {
+			FMFormatManager.getInstance().addExtension(new SimpleVelvetFeatureModelFormat());
+		} catch (final NoClassDefFoundError e) {
+			Logger.logWarning("Could not load Simple Velvet format.");
+		}
 		FMFormatManager.getInstance().addExtension(new DIMACSFormat());
 		FMFormatManager.getInstance().addExtension(new SXFMFormat());
 		FMFormatManager.getInstance().addExtension(new ConquererFMWriter());
 		FMFormatManager.getInstance().addExtension(new CNFFormat());
-		FMFormatManager.getInstance().addExtension(new UVLFeatureModelFormat());
+		try {
+			FMFormatManager.getInstance().addExtension(new UVLFeatureModelFormat());
+		} catch (final NoClassDefFoundError e) {
+			Logger.logWarning("Could not load UVL format.");
+		}
 
 		ConfigurationFactoryManager.getInstance().addExtension(DefaultConfigurationFactory.getInstance());
 		ConfigurationFactoryManager.getInstance().setWorkspaceLoader(new CoreFactoryWorkspaceLoader());
