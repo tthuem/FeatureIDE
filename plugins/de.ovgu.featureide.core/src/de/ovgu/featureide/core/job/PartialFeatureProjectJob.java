@@ -68,7 +68,7 @@ public class PartialFeatureProjectJob implements LongRunningMethod<Boolean> {
 		IFeatureProject newFeatureProject = CorePlugin.getFeatureProject(newProject);
 		while ((newFeatureProject = CorePlugin.getFeatureProject(newProject)) == null) {}
 		final Configuration config =
-			baseProject.loadConfiguration(Paths.get(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + file.getFullPath()));
+			baseProject.loadConfiguration(Paths.get(file.getLocation().toOSString()));
 
 		LongRunningWrapper.runMethod(new PartialFeatureProjectBuilder(newFeatureProject, config));
 		return null;
