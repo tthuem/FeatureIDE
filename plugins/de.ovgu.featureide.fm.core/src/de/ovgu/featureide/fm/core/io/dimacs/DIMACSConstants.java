@@ -36,5 +36,7 @@ public class DIMACSConstants {
 	public static final String CNF = "cnf";
 	/** Token denoting the end of a clause. */
 	public static final String CLAUSE_END = "0";
+	/** Token denoting start of projection string */
+	public static final String PROJECTION = "p show";
 
 }

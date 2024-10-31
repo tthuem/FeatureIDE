@@ -20,6 +20,8 @@
  */
 package de.ovgu.featureide.fm.core.io.dimacs;
 
+import java.util.List;
+
 import org.prop4j.Node;
 
 import de.ovgu.featureide.fm.core.analysis.cnf.CNF;
@@ -38,6 +40,8 @@ public class DimacsWriter {
 
 	private final CNF cnf;
 
+	private final List<Integer> projectionVariables;
+
 	/**
 	 * Constructs a new instance of this class with the given CNF.
 	 *
@@ -45,10 +49,21 @@ public class DimacsWriter {
 	 * @throws IllegalArgumentException if the input is null or not in CNF
 	 */
 	public DimacsWriter(CNF cnf) throws IllegalArgumentException {
+		this(cnf, null);
+	}
+
+	/**
+	 * Constructs a new instance of this class with the given CNF and variables to project on
+	 *
+	 * @param cnf the CNF to write into the file
+	 * @param projectionVariables the variables that should be projected on
+	 */
+	public DimacsWriter(CNF cnf, List<Integer> projectionVariables) {
 		if (cnf == null) {
 			throw new IllegalArgumentException();
 		}
 		this.cnf = cnf;
+		this.projectionVariables = projectionVariables;
 	}
 
 	/**
@@ -77,6 +92,7 @@ public class DimacsWriter {
 		if (writingVariableDirectory) {
 			writeVariableDirectory(sb);
 		}
+		writeProjectionLine(sb);
 		writeProblem(sb);
 		writeClauses(sb);
 		return sb.toString();
@@ -122,6 +138,25 @@ public class DimacsWriter {
 		sb.append(cnf.getVariables().size());
 		sb.append(' ');
 		sb.append(cnf.getClauses().size());
+		sb.append(System.lineSeparator());
+	}
+
+	/**
+	 * Writes the projection line in the format c p show v1 v2 ...
+	 *
+	 * @param sb
+	 */
+	private void writeProjectionLine(StringBuilder sb) {
+		if (projectionVariables == null) {
+			return;
+		}
+		sb.append(DIMACSConstants.COMMENT_START);
+		sb.append(' ');
+		sb.append(DIMACSConstants.PROJECTION);
+		sb.append(' ');
+		for (final Integer variable : projectionVariables) {
+			sb.append(' ' + variable);
+		}
 		sb.append(System.lineSeparator());
 	}
 
