@@ -31,7 +31,10 @@ import de.ovgu.featureide.fm.core.job.monitor.IMonitor.MethodCancelException;
  */
 class StoppableExecuter<T> extends Executer<T> {
 
-	static final int DEFAULT_TIMEOUT = 300;
+	/**
+	 * Default canceling timeout of 300 milliseconds.
+	 */
+	static final int DEFAULT_CANCELING_TIME = 300;
 
 	private class InnerThread extends Thread {
 
@@ -52,31 +55,49 @@ class StoppableExecuter<T> extends Executer<T> {
 
 	}
 
-	private final int cancelingTimeout;
+	private final int cancelingTime;
+	private final int timeout;
+	private boolean canceled = false;
 
 	private InnerThread innerThread = null;
 
-	public StoppableExecuter(LongRunningMethod<T> method, int cancelingTimeout) {
+	/**
+	 * Creates a new stoppable executor. If the provided canceling timeout is smaller then 0, the {@link #DEFAULT_CANCELING_TIME default} is used.
+	 *
+	 * @param method the method to run. Must not be {@code null}.
+	 * @param timeout time in ms after which the execution is canceled.
+	 * @param cancelingTime time in ms to wait after canceling the execution before the thread is stopped forcefully.
+	 */
+	public StoppableExecuter(LongRunningMethod<T> method, int timeout, int cancelingTime) {
 		super(method);
-		this.cancelingTimeout = (cancelingTimeout < 0) ? DEFAULT_TIMEOUT : cancelingTimeout;
+		this.cancelingTime = (cancelingTime < 0) ? DEFAULT_CANCELING_TIME : cancelingTime;
+		this.timeout = (timeout <= 0) ? -1 : timeout;
+
 	}
 
+	/**
+	 * Creates a new stoppable executor. Uses the {@link #DEFAULT_CANCELING_TIME default} canceling time and no timeout.
+	 *
+	 * @param method the method to run. Must not be {@code null}.
+	 */
 	public StoppableExecuter(LongRunningMethod<T> method) {
-		this(method, -1);
+		this(method, -1, -1);
 	}
 
 	@Override
 	public final void cancel() {
 		synchronized (this) {
-			if (innerThread == null) {
+			if (canceled || (innerThread == null) || !innerThread.isAlive()) {
 				return;
 			}
-			monitor.cancel();
+			canceled = true;
 		}
 
-		if (cancelingTimeout > 0) {
+		monitor.cancel();
+
+		if (cancelingTime > 0) {
 			try {
-				innerThread.join(cancelingTimeout);
+				innerThread.join(cancelingTime);
 			} catch (final InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -87,8 +108,10 @@ class StoppableExecuter<T> extends Executer<T> {
 	@SuppressWarnings("deprecation")
 	private void stopInnerThread() {
 		try {
-			if (innerThread.isAlive()) {
-				innerThread.stop();
+			synchronized (this) {
+				if (innerThread.isAlive()) {
+					innerThread.stop();
+				}
 			}
 		} catch (final Exception e) {
 			e.printStackTrace();
@@ -101,11 +124,17 @@ class StoppableExecuter<T> extends Executer<T> {
 			// in case job was started and canceled at the same time
 			this.monitor = monitor;
 			monitor.checkCancel();
+			canceled = false;
 			innerThread = new InnerThread();
 			innerThread.start();
 		}
 		try {
-			innerThread.join();
+			if (timeout > 0) {
+				innerThread.join(timeout);
+				cancel();
+			} else {
+				innerThread.join();
+			}
 			if (innerThread.exception != null) {
 				throw innerThread.exception;
 			}
@@ -114,7 +143,12 @@ class StoppableExecuter<T> extends Executer<T> {
 			Logger.logError(e);
 			stopInnerThread();
 			return null;
+		} catch (final MethodCancelException e) {
+			return null;
 		} finally {
+			synchronized (this) {
+				innerThread = null;
+			}
 			monitor.done();
 		}
 	}

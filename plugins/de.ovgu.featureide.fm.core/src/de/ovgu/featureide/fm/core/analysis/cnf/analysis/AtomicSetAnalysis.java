@@ -51,11 +51,13 @@ public class AtomicSetAnalysis extends AVariableAnalysis<List<LiteralSet>> {
 		final List<LiteralSet> result = new ArrayList<>();
 
 		solver.setSelectionStrategy(SelectionStrategy.POSITIVE);
+		monitor.checkCancel();
 		final int[] model1 = solver.findSolution();
 		solver.useSolutionList(1000);
 
 		if (model1 != null) {
 			solver.setSelectionStrategy(SelectionStrategy.NEGATIVE);
+			monitor.checkCancel();
 			final int[] model2 = solver.findSolution();
 			solver.setSelectionStrategy(SelectionStrategy.POSITIVE);
 
@@ -65,6 +67,7 @@ public class AtomicSetAnalysis extends AVariableAnalysis<List<LiteralSet>> {
 
 			LiteralSet.resetConflicts(model1Copy, model2);
 			for (int i = 0; i < model1Copy.length; i++) {
+				monitor.checkCancel();
 				final int varX = model1Copy[i];
 				if (varX != 0) {
 					solver.assignmentPush(-varX);
@@ -115,6 +118,7 @@ public class AtomicSetAnalysis extends AVariableAnalysis<List<LiteralSet>> {
 
 							solver.assignmentPush(-my0);
 
+							monitor.checkCancel();
 							switch (solver.hasSolution()) {
 							case FALSE:
 								done[j] = 1;
@@ -134,6 +138,7 @@ public class AtomicSetAnalysis extends AVariableAnalysis<List<LiteralSet>> {
 					solver.assignmentPop();
 					solver.assignmentPush(-mx0);
 
+					monitor.checkCancel();
 					switch (solver.hasSolution()) {
 					case FALSE:
 						break;
@@ -154,6 +159,7 @@ public class AtomicSetAnalysis extends AVariableAnalysis<List<LiteralSet>> {
 							if (my0 != 0) {
 								solver.assignmentPush(-my0);
 
+								monitor.checkCancel();
 								switch (solver.hasSolution()) {
 								case FALSE:
 									done[j] = 2;

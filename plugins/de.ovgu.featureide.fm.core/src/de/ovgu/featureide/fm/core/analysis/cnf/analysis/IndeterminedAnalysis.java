@@ -83,6 +83,7 @@ public class IndeterminedAnalysis extends AVariableAnalysis<LiteralSet> {
 				continue;
 			}
 
+			monitor.checkCancel();
 			final SatResult hasSolution = modSolver.hasSolution();
 			switch (hasSolution) {
 			case FALSE:
@@ -106,7 +107,9 @@ public class IndeterminedAnalysis extends AVariableAnalysis<LiteralSet> {
 		while (!potentialResultList.isEmpty()) {
 			final int literal = potentialResultList.last();
 			potentialResultList.pop();
+			monitor.checkCancel();
 			final CNF slicedCNF = LongRunningWrapper.runMethod(new CNFSlicer(solver.getSatInstance(), variables.removeAll(new LiteralSet(literal))));
+			monitor.checkCancel();
 			final List<LiteralSet> clauses = slicedCNF.getClauses();
 			for (final LiteralSet clause : clauses) {
 				if (clause.containsVariable(literal)) {
@@ -124,6 +127,7 @@ public class IndeterminedAnalysis extends AVariableAnalysis<LiteralSet> {
 				continue;
 			}
 
+			monitor.checkCancel();
 			final SatResult hasSolution = modSolver.hasSolution();
 			switch (hasSolution) {
 			case FALSE:
