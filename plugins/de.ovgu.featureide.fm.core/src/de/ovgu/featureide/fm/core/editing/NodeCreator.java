@@ -468,7 +468,7 @@ public class NodeCreator {
 		} else {
 			// add constraint S <=> (A | B | C)
 			if (replacings.get(featureModel.getRenamingsManager().getOldName(rootFeature.getName())) == null) {
-				final Literal[] childrenDown = new Literal[children.length];
+				final Node[] childrenDown = new Node[children.length];
 				for (int j = 0; j < childrenDown.length; j++) {
 					childrenDown[j] = new Literal(((Literal) children[j]).var);
 				}
@@ -480,7 +480,7 @@ public class NodeCreator {
 			if (rootFeature.getStructure().isAlternative()) {
 				// add constraint atmost1(A, B, C)
 				if (children.length > 1) {
-					final Literal[] childrenHorizontal = new Literal[children.length];
+					final Node[] childrenHorizontal = new Node[children.length];
 					for (int j = 0; j < childrenHorizontal.length; j++) {
 						childrenHorizontal[j] = new Literal(((Literal) children[j]).var);
 					}
