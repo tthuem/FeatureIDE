@@ -23,10 +23,12 @@ package de.ovgu.featureide.fm.core;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 import de.ovgu.featureide.fm.core.analysis.ConstraintProperties;
@@ -73,6 +75,7 @@ import de.ovgu.featureide.fm.core.explanations.fm.RedundantConstraintExplanation
 import de.ovgu.featureide.fm.core.filter.HiddenFeatureFilter;
 import de.ovgu.featureide.fm.core.filter.OptionalFeatureFilter;
 import de.ovgu.featureide.fm.core.functional.Functional;
+import de.ovgu.featureide.fm.core.job.IRunner;
 import de.ovgu.featureide.fm.core.job.LongRunningWrapper;
 import de.ovgu.featureide.fm.core.job.monitor.IMonitor;
 import de.ovgu.featureide.fm.core.job.monitor.IMonitor.MethodCancelException;
@@ -169,20 +172,28 @@ public class AnalysesCollection {
 			this.analysis = analysis;
 		}
 
-		public R getResult() {
+		public Optional<R> getResult() {
 			return getResult(null);
 		}
 
-		public R getResult(IMonitor<R> monitor) {
+		public Optional<R> getResult(IMonitor<R> monitor) {
+			return getResult(monitor, -1);
+		}
+
+		public Optional<R> getResult(int timeout) {
+			return getResult(null, timeout);
+		}
+
+		public Optional<R> getResult(IMonitor<R> monitor, int timeout) {
 			if (!enabled) {
-				return null;
+				return Optional.empty();
 			}
 
 			AnalysisResult<R> curAnalysisResult;
 			Object curSyncObject;
 			synchronized (this) {
-				curAnalysisResult = this.analysisResult;
-				curSyncObject = this.syncObject;
+				curAnalysisResult = analysisResult;
+				curSyncObject = syncObject;
 			}
 
 			synchronized (curSyncObject) {
@@ -191,7 +202,9 @@ public class AnalysesCollection {
 				if (curAnalysisResult == null) {
 					final AbstractAnalysis<R> analysisInstance = createNewAnalysis();
 					try {
-						result = LongRunningWrapper.runMethod(analysisInstance, this.monitor);
+						result = timeout > 0 //
+							? compute(analysisInstance, timeout) //
+							: compute(analysisInstance);
 						curAnalysisResult = result == null ? null : analysisInstance.getResult();
 					} catch (final MethodCancelException e) {
 
@@ -199,16 +212,29 @@ public class AnalysesCollection {
 						Logger.logError(e);
 					}
 					synchronized (this) {
-						if (curSyncObject == this.syncObject) {
-							this.analysisResult = curAnalysisResult;
+						if (curSyncObject == syncObject) {
+							analysisResult = curAnalysisResult;
 						}
 					}
 				} else {
 					result = curAnalysisResult.getResult();
 					this.monitor.done();
 				}
-				return result;
+				return Optional.ofNullable(result);
 			}
+		}
+
+		private R compute(final AbstractAnalysis<R> analysisInstance) {
+			return LongRunningWrapper.runMethod(analysisInstance, monitor);
+		}
+
+		private R compute(final AbstractAnalysis<R> analysisInstance, int timeout) throws InterruptedException {
+			final IRunner<R> thread = LongRunningWrapper.getThread(analysisInstance, monitor);
+			thread.setStoppable(true);
+			thread.setTimeout(timeout);
+			thread.schedule();
+			thread.join();
+			return thread.getResults();
 		}
 
 		private A createNewAnalysis() {
@@ -276,12 +302,12 @@ public class AnalysesCollection {
 		@Override
 		protected void configureAnalysis(CNF cnf, CauseAnalysis analysis) {
 			final Anomalies initialAnomalies = new Anomalies();
-			final LiteralSet coreDeadResult = coreDeadAnalysis.getResult();
-			initialAnomalies.setDeadVariables(coreDeadResult);
+			final Optional<LiteralSet> coreDeadResult = coreDeadAnalysis.getResult();
+			initialAnomalies.setDeadVariables(coreDeadResult.orElse(new LiteralSet()));
 
 			foAnalysis.setOptionalFeatures(Functional.filterToList(formula.getFeatureModel().getFeatures(), new OptionalFeatureFilter()));
-			final List<LiteralSet> foResult = foAnalysis.getResult();
-			initialAnomalies.setRedundantClauses(Functional.removeNull(foResult));
+			final Optional<List<LiteralSet>> foResult = foAnalysis.getResult();
+			initialAnomalies.setRedundantClauses(Functional.removeNull(foResult.orElse(Collections.emptyList())));
 
 			analysis.setAnomalies(initialAnomalies);
 			analysis.setClauseList(constraintClauses);

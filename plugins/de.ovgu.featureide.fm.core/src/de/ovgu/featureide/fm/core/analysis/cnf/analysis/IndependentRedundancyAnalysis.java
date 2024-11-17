@@ -101,6 +101,7 @@ public class IndependentRedundancyAnalysis extends AClauseAnalysis<List<LiteralS
 						}
 					}
 
+					monitor.checkCancel();
 					final SatResult hasSolution = solver.hasSolution(complement);
 					switch (hasSolution) {
 					case FALSE:

@@ -20,6 +20,8 @@
  */
 package de.ovgu.featureide.fm.core.job;
 
+import java.util.Objects;
+
 import de.ovgu.featureide.fm.core.job.monitor.IMonitor;
 
 /**
@@ -32,7 +34,7 @@ class Executer<T> {
 	protected IMonitor<T> monitor;
 
 	public Executer(LongRunningMethod<T> method) {
-		this.method = method;
+		this.method = Objects.requireNonNull(method);
 	}
 
 	public void cancel() {

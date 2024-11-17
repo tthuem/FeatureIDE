@@ -355,19 +355,6 @@ public class SXFMFormat extends AXMLFormat<IFeatureModel> implements IFeatureMod
 		removeUnnecessaryAbstractFeatures(object.getStructure().getRoot().getFeature());
 	}
 
-	private String removeWhitespaces(String str) {
-		str = str.trim();
-		if (str.contains(" ")) {
-			final String temp = str.substring(0, str.indexOf(' ') + 1);
-			str = str.substring(str.indexOf(' ') + 1);
-			while (str.contains(" ")) {
-				str = str.substring(0, str.indexOf(' ')) + str.substring(str.indexOf(' ') + 1, str.length());
-			}
-			str = temp + str;
-		}
-		return str;
-	}
-
 	/**
 	 * Reads one line of the input Text and builds the corresponding feature
 	 *
@@ -409,19 +396,9 @@ public class SXFMFormat extends AXMLFormat<IFeatureModel> implements IFeatureMod
 					}
 				}
 				// Remove special characters and whitespaces from names
-				lineText = removeWhitespaces(lineText);
-
-				final char[] lineTextChars = lineText.toCharArray();
-				for (int i = 0; i < lineTextChars.length; i++) {
-					final Character c = lineTextChars[i];
-
-					if (!(Character.isLetterOrDigit(c) || c.equals(':') || c.equals('[') || c.equals(']') || c.equals(',') || c.equals('*') || c.equals('(')
-						|| c.equals(')'))) {
-						lineTextChars[i] = '_';
-					}
-				}
-
-				lineText = new String(lineTextChars);
+				lineText = lineText //
+						.replaceAll("\\s+", "_") //
+						.replaceAll("[^a-zA-Z0-9+/\\-_:,*()\\[\\]]", "_");
 
 				if (lineText.startsWith(":r")) {
 					feat = new FeatureIndent(null, 0, factory.createFeature(object, ""));

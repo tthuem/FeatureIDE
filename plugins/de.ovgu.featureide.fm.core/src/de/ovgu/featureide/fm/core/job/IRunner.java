@@ -21,19 +21,59 @@
 package de.ovgu.featureide.fm.core.job;
 
 /**
+ * An interface for executing a {@link LongRunningMethod long running method} within a separate thread.
  *
  * @author Sebastian Krieter
  */
 public interface IRunner<T> extends IJob<T> {
 
-	int getCancelingTimeout();
+	/**
+	 * Time to wait after canceling the execution before the executing thread is stopped forcefully.
+	 *
+	 * @return time in ms
+	 */
+	int getCancelingTime();
 
+	/**
+	 * Time after which the execution is canceled.
+	 *
+	 * @return time in ms
+	 */
+	int getTimeout();
+
+	/**
+	 * Whether the runner can be stopped by a timeout or manually.
+	 *
+	 * @return if {@code true} the runner can be stopped.
+	 */
 	boolean isStoppable();
 
-	void setCancelingTimeout(int cancelingTimeout);
+	/**
+	 * Time to wait after canceling the execution before the executing thread is stopped forcefully.
+	 *
+	 * @param cancelingTime time in ms
+	 */
+	void setCancelingTime(int cancelingTime);
 
+	/**
+	 * Time after which the execution is canceled.
+	 *
+	 * @param timeout time in ms
+	 */
+	void setTimeout(int timeout);
+
+	/**
+	 * Determines, whether the runner can be stopped by a timeout or manually.
+	 *
+	 * @param stoppable if {@code true} the runner can be stopped.
+	 */
 	void setStoppable(boolean stoppable);
 
+	/**
+	 * Returns the method to be executed.
+	 *
+	 * @return the method
+	 */
 	LongRunningMethod<T> getMethod();
 
 }

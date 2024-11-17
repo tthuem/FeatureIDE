@@ -43,7 +43,9 @@ public class LongRunningThread<T> extends Thread implements IRunner<T> {
 	private final IMonitor<T> monitor;
 	private Executer<T> executer;
 
-	private int cancelingTimeout = -1;
+	private int cancelingTime = -1;
+	private int timeout = -1;
+
 	private T methodResult = null;
 	private JobStatus status = JobStatus.NOT_STARTED;
 
@@ -81,8 +83,13 @@ public class LongRunningThread<T> extends Thread implements IRunner<T> {
 	}
 
 	@Override
-	public int getCancelingTimeout() {
-		return cancelingTimeout;
+	public int getCancelingTime() {
+		return cancelingTime;
+	}
+
+	@Override
+	public int getTimeout() {
+		return timeout;
 	}
 
 	@Override
@@ -112,10 +119,10 @@ public class LongRunningThread<T> extends Thread implements IRunner<T> {
 
 	@Override
 	public void run() {
-		// TODO check fo cancel at beginning
+		// TODO check for cancel at beginning
 		status = JobStatus.RUNNING;
 		try {
-			executer = stoppable ? new StoppableExecuter<>(method, cancelingTimeout) : new Executer<>(method);
+			executer = stoppable ? new StoppableExecuter<>(method, timeout, cancelingTime) : new Executer<>(method);
 			methodResult = executer.execute(monitor);
 			status = JobStatus.OK;
 		} catch (final Exception e) {
@@ -139,8 +146,13 @@ public class LongRunningThread<T> extends Thread implements IRunner<T> {
 	}
 
 	@Override
-	public void setCancelingTimeout(int cancelingTimeout) {
-		this.cancelingTimeout = cancelingTimeout;
+	public void setCancelingTime(int cancelingTime) {
+		this.cancelingTime = cancelingTime;
+	}
+
+	@Override
+	public void setTimeout(int timeout) {
+		this.timeout = timeout;
 	}
 
 	@Override
