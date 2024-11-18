@@ -20,6 +20,7 @@
  */
 package de.ovgu.featureide.fm.core.analysis.cnf.generator.configuration;
 
+import java.util.Arrays;
 import java.util.List;
 
 import de.ovgu.featureide.fm.core.analysis.cnf.CNF;
@@ -59,7 +60,7 @@ public class AllConfigurationGenerator extends AConfigurationGenerator {
 			if (solution == null) {
 				break;
 			}
-			final LiteralSet result = new LiteralSet(solution, Order.INDEX, false);
+			final LiteralSet result = new LiteralSet(Arrays.copyOf(solution, solution.length), Order.INDEX, false);
 			addResult(result);
 			try {
 				solver.addInternalClause(result.negate());

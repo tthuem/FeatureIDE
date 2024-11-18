@@ -100,13 +100,6 @@ public class ModifiableSatSolver extends AdvancedSatSolver {
 	}
 
 	@Override
-	protected void configureSolver(Solver<?> solver) {
-		solver.setTimeoutMs(1000);
-		solver.setDBSimplificationAllowed(false);
-		solver.setVerbose(false);
-	}
-
-	@Override
 	public ModifiableSatSolver clone() {
 		if (this.getClass() == ModifiableSatSolver.class) {
 			return new ModifiableSatSolver(this);
