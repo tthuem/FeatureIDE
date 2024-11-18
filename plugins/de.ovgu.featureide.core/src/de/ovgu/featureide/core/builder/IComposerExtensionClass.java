@@ -138,7 +138,7 @@ public interface IComposerExtensionClass extends IComposerExtensionBase {
 	 * Replaces all markers in the template.
 	 *
 	 * @param fileContent the file's content where markers shall be replaced
-	 * @param refines defines wheather the refines checkbos is selected.
+	 * @param refines defines whether the refines checkbox is selected.
 	 * @param packageName The package name
 	 * @return the new file content
 	 */
@@ -154,7 +154,7 @@ public interface IComposerExtensionClass extends IComposerExtensionBase {
 	/**
 	 * Is called after changes at composition folder.
 	 *
-	 * @param delta Changes of the resourcea as delta
+	 * @param delta Changes of the resource as delta
 	 * @param buildFile build file
 	 */
 	void postCompile(IResourceDelta delta, IFile buildFile);
@@ -218,6 +218,8 @@ public interface IComposerExtensionClass extends IComposerExtensionBase {
 	 * @throws CoreException
 	 * @throws IOException
 	 */
-	void buildPartialFeatureProjectAssets(IFolder sourceFolder, ArrayList<String> removedFeatures, ArrayList<String> mandatoryFeatures)
-			throws IOException, CoreException;
+	default void buildPartialFeatureProjectAssets(IFolder sourceFolder, ArrayList<String> removedFeatures, ArrayList<String> mandatoryFeatures)
+			throws IOException, CoreException {
+		throw new UnsupportedOperationException();
+	}
 }

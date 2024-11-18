@@ -594,14 +594,4 @@ public class MungePreprocessor extends PPComposerExtensionClass {
 		return false;// TODO munge seems to have parallelization problems
 	}
 
-	@Override
-	public boolean supportsPartialFeatureProject() {
-		return false;
-	}
-
-	@Override
-	public void buildPartialFeatureProjectAssets(IFolder sourceFolder, ArrayList<String> removedFeatures, ArrayList<String> mandatoryFeatures)
-			throws IOException, CoreException {
-
-	}
 }

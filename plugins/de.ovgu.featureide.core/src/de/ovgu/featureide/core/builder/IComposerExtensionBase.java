@@ -94,7 +94,9 @@ public interface IComposerExtensionBase extends IExtension {
 	 *
 	 * @return true if the composition tool supports the creation of a partial feature project.
 	 */
-	boolean supportsPartialFeatureProject();
+	default boolean supportsPartialFeatureProject() {
+		return false;
+	}
 
 	/**
 	 * @return whether all dependencies are fulfilled to use this composer

@@ -1161,37 +1161,14 @@
             checkEnabled="false">
          <with
                variable="activeMenuSelection">
-            <and>
-               <or>
-                  <iterate
-                        ifEmpty="false"
-                        operator="or">
-                     <test
-                           args="de.ovgu.featureide.preprocessor.antenna"
-                           property="de.ovgu.featureide.fm.ui.properties.composer">
-                     </test>
-                  </iterate>
-                  <iterate
-                        ifEmpty="false"
-                        operator="or">
-                     <test
-                           args="de.ovgu.featureide.composer.featurehouse"
-                           property="de.ovgu.featureide.fm.ui.properties.composer">
-                     </test>
-                  </iterate>
-                  <iterate
-                        ifEmpty="false"
-                        operator="or">
-                     <test
-                           args="de.ovgu.featureide.core.FeatureModeling"
-                           property="de.ovgu.featureide.fm.ui.properties.composer">
-                     </test>
-                  </iterate>
-               </or>
-            </and>
-            <reference
-                  definitionId="de.ovgu.featureide.fm.ui.expressions.containsOnlyConfiguration">
-            </reference>
+             <iterate>
+                <test
+                      property="de.ovgu.featureide.fm.ui.properties.partialFeatureProjectBuild">
+                </test>
+             </iterate>
+             <reference
+                   definitionId="de.ovgu.featureide.fm.ui.expressions.containsOnlyConfiguration">
+             </reference>
          </with>
       </visibleWhen>
    </command>
@@ -1402,6 +1379,20 @@
 				properties="composer"
 				type="java.lang.Object">
 		</propertyTester>
+		<propertyTester
+				class="de.ovgu.featureide.ui.properties.ComposerTester"
+				id="de.ovgu.featureide.fm.ui.propertytester.partialFeatureProjectBuild"
+				namespace="de.ovgu.featureide.fm.ui.properties"
+				properties="partialFeatureProjectBuild"
+				type="java.lang.Object">
+		</propertyTester>
+		<propertyTester
+				class="de.ovgu.featureide.ui.properties.IntegrationTester"
+				id="de.ovgu.featureide.ui.properties.integrationtester"
+				namespace="de.ovgu.featureide.ui.properties"
+				properties="integration"
+				type="org.eclipse.core.resources.IFolder">
+		</propertyTester>
 	</extension>
 	<extension point="org.eclipse.debug.ui.launchShortcuts">
 		<shortcut
@@ -1432,15 +1423,6 @@
 				</enablement>
 			</contextualLaunch>
 		</shortcut>
-	</extension>
-	<extension point="org.eclipse.core.expressions.propertyTesters">
-		<propertyTester
-				class="de.ovgu.featureide.ui.properties.IntegrationTester"
-				id="de.ovgu.featureide.ui.properties.integrationtester"
-				namespace="de.ovgu.featureide.ui.properties"
-				properties="integration"
-				type="org.eclipse.core.resources.IFolder">
-		</propertyTester>
 	</extension>
 	<extension
 			point="org.eclipse.ui.navigator.viewer">
