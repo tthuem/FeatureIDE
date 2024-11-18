@@ -28,6 +28,7 @@ import static de.ovgu.featureide.fm.core.localization.StringTable.SOME_MODIFIED_
 import static de.ovgu.featureide.fm.core.localization.StringTable.THE_FEATURE_MODEL_IS_VOID_COMMA__I_E__COMMA__IT_CONTAINS_NO_PRODUCTS;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -69,6 +70,7 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.dialogs.ListDialog;
+import org.eclipse.ui.ide.FileStoreEditorInput;
 import org.eclipse.ui.ide.IGotoMarker;
 import org.eclipse.ui.operations.RedoActionHandler;
 import org.eclipse.ui.operations.UndoActionHandler;
@@ -76,9 +78,11 @@ import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
+import de.ovgu.featureide.fm.core.EmptyMarkerHandler;
 import de.ovgu.featureide.fm.core.ExtensionManager.NoSuchExtensionException;
 import de.ovgu.featureide.fm.core.FMComposerManager;
 import de.ovgu.featureide.fm.core.FMCorePlugin;
+import de.ovgu.featureide.fm.core.IModelMarkerHandler;
 import de.ovgu.featureide.fm.core.Logger;
 import de.ovgu.featureide.fm.core.ModelMarkerHandler;
 import de.ovgu.featureide.fm.core.base.IFeatureModel;
@@ -115,7 +119,10 @@ public class FeatureModelEditor extends MultiPageEditorPart implements IEventLis
 
 	public List<IFeatureModelEditorPage> extensionPages, pages = new LinkedList<>();
 
-	private ModelMarkerHandler<IFile> markerHandler;
+	private IModelMarkerHandler markerHandler;
+	private IProject inputProject;
+	private Path inputPath;
+
 	boolean isPageModified = false;
 	boolean isFirstSourceAccess = true;
 	FeatureModelManager fmManager;
@@ -216,10 +223,6 @@ public class FeatureModelEditor extends MultiPageEditorPart implements IEventLis
 
 	public FeatureModelManager getFeatureModelManager() {
 		return fmManager;
-	}
-
-	public IFile getModelFile() {
-		return markerHandler.getModelFile();
 	}
 
 	public IFeatureModel getOriginalFeatureModel() {
@@ -361,8 +364,8 @@ public class FeatureModelEditor extends MultiPageEditorPart implements IEventLis
 	 * Open a dialog to save the model.
 	 */
 	public void saveModelForConsistentRenamings() {
-		final LinkedList<String> editor = new LinkedList<String>();
-		editor.add(getModelFile().getName());
+		final LinkedList<String> editor = new LinkedList<>();
+		editor.add(inputPath.getFileName().toString());
 
 		final ListDialog dialog = new ListDialog(getSite().getWorkbenchWindow().getShell());
 		dialog.setAddCancelButton(true);
@@ -533,25 +536,41 @@ public class FeatureModelEditor extends MultiPageEditorPart implements IEventLis
 
 	@Override
 	protected void setInput(IEditorInput input) {
-		// Cast is necessary, don't remove
-		markerHandler = new ModelMarkerHandler<>((IFile) input.getAdapter(IFile.class));
 		super.setInput(input);
 
-		final Path path = EclipseFileSystem.getPath(markerHandler.getModelFile());
-		fmManager = FeatureModelManager.getInstance(path);
+		final IFile modelFile;
+		if (input instanceof FileStoreEditorInput) {
+			modelFile = null;
+			inputPath = Paths.get(((FileStoreEditorInput) input).getURI());
+			inputProject = null;
+			markerHandler = new EmptyMarkerHandler();
+		} else {
+			// Cast is necessary, don't remove
+			modelFile = (IFile) input.getAdapter(IFile.class);
+			if (modelFile != null) {
+				inputPath = EclipseFileSystem.getPath(modelFile);
+				inputProject = modelFile.getProject();
+				markerHandler = new ModelMarkerHandler<>(modelFile);
+			}
+		}
+		fmManager = FeatureModelManager.getInstance(inputPath);
 		if (fmManager != null) {
-			fmManager.getFormat().setFeatureNameValidator(FMComposerManager.getFMComposerExtension(EclipseFileSystem.getResource(path).getProject()));
+			if (inputProject != null) {
+				fmManager.getFormat().setFeatureNameValidator(FMComposerManager.getFMComposerExtension(inputProject));
+			}
+
 			createModelFileMarkers(fmManager.getLastProblems());
 			gfm = new GraphicalFeatureModel(fmManager);
 			gfm.init();
 			FMPropertyManager.registerEditor(this);
 
-			final IFile modelFile = getModelFile();
-			final String modelFileName = modelFile.getName();
-			if (FMCorePlugin.findModelFile(modelFile.getProject()).map(modelFile::equals).orElse(false)) {
-				setPartName(modelFile.getProject().getName() + MODEL);
-			} else {
-				setPartName(modelFileName + " (" + modelFile.getProject().getName() + ")");
+			if (inputProject != null) {
+				if (FMCorePlugin.findModelFile(inputProject).map(modelFile::equals).orElse(false)) {
+					setPartName(inputProject.getName() + MODEL);
+				} else {
+					final String modelFileName = inputPath.getFileName().toString();
+					setPartName(modelFileName + " (" + inputProject.getName() + ")");
+				}
 			}
 		} else {
 			setPartName(input.getName());
@@ -628,8 +647,7 @@ public class FeatureModelEditor extends MultiPageEditorPart implements IEventLis
 	}
 
 	private boolean saveEditors() {
-		if (fmManager.getSnapshot().getRenamingsManager().isRenamed()) {
-			final IProject project = getModelFile().getProject();
+		if ((inputProject != null) && fmManager.getSnapshot().getRenamingsManager().isRenamed()) {
 			final ArrayList<String> dirtyEditorFileNames = new ArrayList<>();
 			final ArrayList<IEditorPart> dirtyEditors = new ArrayList<>();
 			for (final IWorkbenchWindow window : getSite().getWorkbenchWindow().getWorkbench().getWorkbenchWindows()) {
@@ -639,7 +657,7 @@ public class FeatureModelEditor extends MultiPageEditorPart implements IEventLis
 							final IEditorPart editor = editorRef.getEditor(true);
 							if (editor.isDirty()) {
 								final IFile editorFile = Adapters.adapt(editor.getEditorInput(), IFile.class);
-								if (editorFile.getProject().equals(project)) {
+								if (editorFile.getProject().equals(inputProject)) {
 									dirtyEditorFileNames.add(editorFile.getName());
 									dirtyEditors.add(editor);
 								}
