@@ -185,7 +185,7 @@ public final class DeleteDialogVerifier {
 	private static boolean isAnyFeatureMultiFeature(List<IFeature> featuresToDelete) {
 		for (final IFeature feat : featuresToDelete) {
 			if (feat instanceof MultiFeature) {
-				return true;
+				return ((MultiFeature) feat).isFromExtern();
 			}
 		}
 		return false;
