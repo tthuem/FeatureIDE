@@ -87,8 +87,10 @@ public class AdvancedConfigurationPage extends ConfigurationTreeEditorPage imple
 				final ImageData imageData1 = image1.getImageData();
 				final ImageData imageData2 = image2.getImageData();
 
-				tempImage =
-					new Image(Display.getCurrent(), imageData2.width + distance + imageData1.width + distance + colorWidth + distance, imageData1.height);
+				final int colorPositionX = imageData2.width + distance + imageData1.width + distance;
+				final int colorPositionY = (imageData1.height - colorHeight) / 2;
+
+				tempImage = new Image(Display.getCurrent(), colorPositionX + colorWidth + distance, imageData1.height);
 				final ImageData id = tempImage.getImageData();
 				id.alpha = 0;
 
@@ -102,19 +104,16 @@ public class AdvancedConfigurationPage extends ConfigurationTreeEditorPage imple
 					final Color bgColor = new Color(null, ColorPalette.getRGB(color.getValue(), 0.5f));
 					try {
 						gc.setBackground(bgColor);
-						gc.fillRoundRectangle(imageData2.width + distance + imageData1.width + distance, (imageData1.height - colorHeight) / 2, colorWidth,
-								colorHeight, colorHeight, colorHeight);
+						gc.fillRoundRectangle(colorPositionX, colorPositionY, colorWidth, colorHeight, colorHeight, colorHeight);
 					} finally {
 						bgColor.dispose();
 					}
 				} else {
 					gc.setForeground(FMPropertyManager.getLegendBorderColor());
-					gc.drawRoundRectangle(imageData2.width + distance + imageData1.width + distance, (imageData1.height - colorHeight) / 2, colorWidth,
-							colorHeight, colorHeight, colorHeight);
+					gc.drawRoundRectangle(colorPositionX, colorPositionY, colorWidth, colorHeight, colorHeight, colorHeight);
 				}
 
 				combinedImages.put(imageString, combinedImage);
-
 			} finally {
 				if (gc != null) {
 					gc.dispose();
