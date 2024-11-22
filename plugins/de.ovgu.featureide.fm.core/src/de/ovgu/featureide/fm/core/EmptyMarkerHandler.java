@@ -1,5 +1,5 @@
 /* FeatureIDE - A Framework for Feature-Oriented Software Development
- * Copyright (C) 2005-2019  FeatureIDE team, University of Magdeburg, Germany
+ * Copyright (C) 2005-2024  FeatureIDE team, University of Magdeburg, Germany
  *
  * This file is part of FeatureIDE.
  *
@@ -18,32 +18,25 @@
  *
  * See http://featureide.cs.ovgu.de/ for further information.
  */
-package de.ovgu.featureide.fm.core.job;
-
-import java.util.Objects;
-
-import de.ovgu.featureide.fm.core.job.monitor.IMonitor;
+package de.ovgu.featureide.fm.core;
 
 /**
+ * Default implementation of {@link IModelMarkerHandler}. Does nothing.
  *
  * @author Sebastian Krieter
+ *
  */
-class Executer<T> {
+public class EmptyMarkerHandler implements IModelMarkerHandler {
 
-	protected final LongRunningMethod<T> method;
-	protected IMonitor<T> monitor;
+	@Override
+	public void createModelMarker(String message, int severity, int lineNumber) {}
 
-	public Executer(LongRunningMethod<T> method) {
-		this.method = Objects.requireNonNull(method);
-	}
+	@Override
+	public void deleteAllModelMarkers() {}
 
-	public void cancel() {
-		monitor.cancel();
-	}
-
-	public T execute(IMonitor<T> monitor) throws Exception {
-		this.monitor = monitor;
-		return method.execute(monitor);
+	@Override
+	public boolean hasModelMarkers() {
+		return false;
 	}
 
 }

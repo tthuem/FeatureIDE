@@ -87,6 +87,10 @@ public class MultiFeature extends Feature {
 		return type == TYPE_INSTANCE;
 	}
 
+	public boolean isIntern() {
+		return type == TYPE_INTERN;
+	}
+
 	public boolean isFromExtern() {
 		return type != TYPE_INTERN;
 	}

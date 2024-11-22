@@ -44,8 +44,7 @@ public class BuildPartialProjectHandler extends AFileHandler {
 		if (project == null) {
 			UIPlugin.getDefault().logWarning(CANT_DERIVE_PARTIAL_PROJECT_BECAUSE_IT_DOES_NOT_BELONG_TO_A_FEATURE_PROJECT);
 		} else {
-			final LongRunningJob<Boolean> job = new LongRunningJob<Boolean>("Creating Partial Feature Project", new PartialFeatureProjectJob(file));
-			job.schedule();
+			new LongRunningJob<>("Creating Partial Feature Project", new PartialFeatureProjectJob(file)).schedule();
 		}
 	}
 }

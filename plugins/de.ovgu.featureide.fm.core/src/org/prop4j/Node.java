@@ -304,19 +304,13 @@ public abstract class Node {
 
 	public void removeDuplicates() {
 		if ((children != null) && (children.length > 1)) {
-			final HashSet<Node> childrenSet = new HashSet<>();
-			for (int i = 0; i < children.length; i++) {
-				final Node child = children[i];
+			final LinkedHashSet<Node> childrenSet = new LinkedHashSet<>();
+			for (final Node child : children) {
 				child.removeDuplicates();
 				childrenSet.add(child);
 			}
 			if (childrenSet.size() < children.length) {
-				final Node[] newChildren = new Node[childrenSet.size()];
-				int i = 0;
-				for (final Node child : childrenSet) {
-					newChildren[i++] = child;
-				}
-				children = newChildren;
+				children = childrenSet.toArray(new Node[0]);
 			}
 		}
 	}

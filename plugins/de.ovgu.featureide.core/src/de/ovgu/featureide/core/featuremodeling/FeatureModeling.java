@@ -133,12 +133,10 @@ public class FeatureModeling extends ComposerExtensionClass {
 
 	@Override
 	public boolean supportsPartialFeatureProject() {
-		return false;
+		return true;
 	}
 
 	@Override
 	public void buildPartialFeatureProjectAssets(IFolder sourceFolder, ArrayList<String> removedFeatures, ArrayList<String> mandatoryFeatures)
-			throws IOException, CoreException {
-
-	}
+			throws IOException, CoreException {}
 }

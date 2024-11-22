@@ -75,37 +75,56 @@ public class AdvancedConfigurationPage extends ConfigurationTreeEditorPage imple
 		final FeatureColor color = FeatureColorManager.getColor(feature);
 		final String imageString = image1.toString() + image2.toString() + (color != null ? color.getColorName() : "");
 		Image combinedImage = combinedImages.get(imageString);
+
 		if (combinedImage == null) {
 			final int distance = 4;
 			final int colorWidth = 24;
 			final int colorHeight = 12;
 
-			final ImageData imageData1 = image1.getImageData();
-			final ImageData imageData2 = image2.getImageData();
-			final Image image =
-				new Image(Display.getCurrent(), imageData2.width + distance + imageData1.width + distance + colorWidth + distance, imageData1.height);
-			final ImageData id = image.getImageData();
-			id.alpha = 0;
-			combinedImage = new Image(Display.getCurrent(), id);
-			final GC gc = new GC(combinedImage);
+			Image tempImage = null;
+			GC gc = null;
+			try {
+				final ImageData imageData1 = image1.getImageData();
+				final ImageData imageData2 = image2.getImageData();
 
-			gc.drawImage(image2, 0, 0, imageData2.width, imageData2.height, 0, 0, imageData2.width, imageData2.height);
-			gc.drawImage(image1, 0, 0, imageData1.width, imageData1.height, imageData2.width + distance, 0, imageData1.width, imageData1.height);
-			if (color != FeatureColor.NO_COLOR) {
-				gc.setBackground(new Color(Display.getCurrent(), ColorPalette.getRGB(color.getValue(), 0.5f)));
-				gc.fillRoundRectangle(imageData2.width + distance + imageData1.width + distance, (imageData1.height - colorHeight) / 2, colorWidth, colorHeight,
-						colorHeight, colorHeight);
-			} else {
-				gc.setForeground(FMPropertyManager.getLegendBorderColor());
-				gc.drawRoundRectangle(imageData2.width + distance + imageData1.width + distance, (imageData1.height - colorHeight) / 2, colorWidth, colorHeight,
-						colorHeight, colorHeight);
-			}
+				final int colorPositionX = imageData2.width + distance + imageData1.width + distance;
+				final int colorPositionY = (imageData1.height - colorHeight) / 2;
 
-			image.dispose();
-			if (feature.getStructure().isRoot()) {
-				image1.dispose();
+				tempImage = new Image(Display.getCurrent(), colorPositionX + colorWidth + distance, imageData1.height);
+				final ImageData id = tempImage.getImageData();
+				id.alpha = 0;
+
+				combinedImage = new Image(Display.getCurrent(), id);
+				gc = new GC(combinedImage);
+
+				gc.drawImage(image2, 0, 0, imageData2.width, imageData2.height, 0, 0, imageData2.width, imageData2.height);
+				gc.drawImage(image1, 0, 0, imageData1.width, imageData1.height, imageData2.width + distance, 0, imageData1.width, imageData1.height);
+
+				if (color != FeatureColor.NO_COLOR) {
+					final Color bgColor = new Color(null, ColorPalette.getRGB(color.getValue(), 0.5f));
+					try {
+						gc.setBackground(bgColor);
+						gc.fillRoundRectangle(colorPositionX, colorPositionY, colorWidth, colorHeight, colorHeight, colorHeight);
+					} finally {
+						bgColor.dispose();
+					}
+				} else {
+					gc.setForeground(FMPropertyManager.getLegendBorderColor());
+					gc.drawRoundRectangle(colorPositionX, colorPositionY, colorWidth, colorHeight, colorHeight, colorHeight);
+				}
+
+				combinedImages.put(imageString, combinedImage);
+			} finally {
+				if (gc != null) {
+					gc.dispose();
+				}
+				if (tempImage != null) {
+					tempImage.dispose();
+				}
+				if (feature.getStructure().isRoot() && (image1 != null) && !image1.isDisposed()) {
+					image1.dispose();
+				}
 			}
-			combinedImages.put(imageString, combinedImage);
 		}
 
 		return combinedImage;

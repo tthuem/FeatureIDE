@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Scanner;
@@ -43,6 +44,12 @@ import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jdt.core.IClasspathAttribute;
+import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.internal.core.ClasspathEntry;
 
 import de.ovgu.featureide.ahead.wrapper.AheadBuildErrorEvent;
 import de.ovgu.featureide.ahead.wrapper.AheadBuildErrorListener;
@@ -59,6 +66,7 @@ import de.ovgu.featureide.fm.core.io.EclipseFileSystem;
  *
  * @author Tom Brosch
  */
+@SuppressWarnings("restriction")
 public class AheadComposer extends ComposerExtensionClass {
 
 	public static final String COMPOSER_ID = "de.ovgu.featureide.composer.ahead";
@@ -307,10 +315,10 @@ public class AheadComposer extends ComposerExtensionClass {
 		return TEMPLATES;
 	}
 
-	private static final ArrayList<String[]> TEMPLATES = createTempltes();
+	private static final ArrayList<String[]> TEMPLATES = createTemplates();
 
-	private static ArrayList<String[]> createTempltes() {
-		final ArrayList<String[]> list = new ArrayList<String[]>(1);
+	private static ArrayList<String[]> createTemplates() {
+		final ArrayList<String[]> list = new ArrayList<>(1);
 		list.add(new String[] { "Jak", "jak", "/**" + NEWLINE + " * TODO description" + NEWLINE + " */" + NEWLINE + "public " + REFINES_PATTERN + " class "
 			+ CLASS_NAME_PATTERN + " {" + NEWLINE + NEWLINE + "}" });
 		return list;
@@ -344,6 +352,22 @@ public class AheadComposer extends ComposerExtensionClass {
 		super.addCompiler(project, sourcePath, configPath, buildPath);
 		addSettings(project);
 		removeOldBuildCommand(project);
+	}
+
+	@Override
+	public IClasspathEntry setSourceEntry(String buildPath, IClasspathEntry e) {
+		IPath[] exclusionPatterns = e.getExclusionPatterns();
+		exclusionPatterns = Arrays.copyOf(exclusionPatterns, exclusionPatterns.length + 1);
+		exclusionPatterns[exclusionPatterns.length - 1] = new Path("**/*.jak");
+		return new ClasspathEntry(e.getContentKind(), e.getEntryKind(), new Path(buildPath), e.getInclusionPatterns(), exclusionPatterns,
+				e.getSourceAttachmentPath(), e.getSourceAttachmentRootPath(), null, e.isExported(), e.getAccessRules(), e.combineAccessRules(),
+				e.getExtraAttributes());
+	}
+
+	@Override
+	public IClasspathEntry getSourceEntry(String path) {
+		return new ClasspathEntry(IPackageFragmentRoot.K_SOURCE, IClasspathEntry.CPE_SOURCE, new Path(path), new IPath[0], new IPath[] { new Path("**/*.jak") },
+				null, null, null, false, null, false, new IClasspathAttribute[0]);
 	}
 
 	/**
@@ -440,14 +464,4 @@ public class AheadComposer extends ComposerExtensionClass {
 		return false;
 	}
 
-	@Override
-	public boolean supportsPartialFeatureProject() {
-		return false;
-	}
-
-	@Override
-	public void buildPartialFeatureProjectAssets(IFolder sourceFolder, ArrayList<String> removedFeatures, ArrayList<String> mandatoryFeatures)
-			throws IOException, CoreException {
-
-	}
 }

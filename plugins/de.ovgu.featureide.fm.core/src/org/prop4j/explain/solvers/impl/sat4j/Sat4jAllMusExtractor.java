@@ -44,7 +44,7 @@ public class Sat4jAllMusExtractor extends Sat4jMutableSatSolver implements MusEx
 
 	@Override
 	protected ISolver createOracle() {
-		allMusExtractor = new AllMUSes(SolverFactory.instance());
+		allMusExtractor = new AllMUSes(true, SolverFactory.instance());
 		return allMusExtractor.getSolverInstance();
 	}
 
@@ -82,10 +82,9 @@ public class Sat4jAllMusExtractor extends Sat4jMutableSatSolver implements MusEx
 		final List<IVecInt> allIndexes = allMusExtractor.computeAllMUSes();
 		final List<Set<Integer>> allMuses = new ArrayList<>(allIndexes.size());
 		for (final IVecInt indexes : allIndexes) {
-			final Set<Integer> mus = new TreeSet<Integer>();
+			final Set<Integer> mus = new TreeSet<>();
 			for (int i = 0; i < indexes.size(); i++) {
-				final int index = indexes.get(i);
-				mus.add(getClauseIndexFromIndex(index));
+				mus.add(getClauseIndexFromIndex(indexes.get(i)));
 			}
 			allMuses.add(mus);
 		}

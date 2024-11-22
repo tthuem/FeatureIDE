@@ -146,36 +146,45 @@ public class FeatureOrderEditor extends FeatureModelEditorPage {
 	@Override
 	public void createPartControl(Composite parent) {
 		// Cast is necessary, don't remove
-		final IProject project = (IProject) input.getAdapter(IFile.class).getProject();
-		hasFeatureOrder = FMComposerManager.getFMComposerExtension(project).hasFeatureOrder();
+		final IFile inputFile = (IFile) input.getAdapter(IFile.class);
 		comp = new Composite(parent, SWT.NONE);
 		final GridLayout layout = new GridLayout();
 		comp.setLayout(layout);
 		final Label label = new Label(comp, SWT.NONE);
-		if (!hasFeatureOrder) {
+		if (inputFile != null) {
+			final IProject project = inputFile.getProject();
+			hasFeatureOrder = FMComposerManager.getFMComposerExtension(project).hasFeatureOrder();
+			if (!hasFeatureOrder) {
+				layout.numColumns = 1;
+				label.setText(FMComposerManager.getFMComposerExtension(project).getOrderPageMessage());
+				featureOrderTable = new FeatureOrderTable(comp, this);
+				featureOrderTable.setVisible(true);
+			} else {
+				layout.numColumns = 3;
+				label.setText(USER_DEFINED_FEATURE_ORDER);
+				activate = new Button(comp, SWT.CHECK);
+				activate.addSelectionListener(new org.eclipse.swt.events.SelectionAdapter() {
+
+					@Override
+					public void widgetSelected(org.eclipse.swt.events.SelectionEvent e) {
+						final boolean selection = activate.getSelection();
+						enableUI(selection);
+						updateFeatureOrderList();
+						setDirty();
+					}
+				});
+				featureOrderTable = new FeatureOrderTable(comp, this);
+				createGridData();
+				createUpButton();
+				createDownButton();
+				createDeafaultButton();
+			}
+		} else {
+			hasFeatureOrder = false;
 			layout.numColumns = 1;
-			label.setText(FMComposerManager.getFMComposerExtension(project).getOrderPageMessage());
+			label.setText("No feature order available for external file");
 			featureOrderTable = new FeatureOrderTable(comp, this);
 			featureOrderTable.setVisible(true);
-		} else {
-			layout.numColumns = 3;
-			label.setText(USER_DEFINED_FEATURE_ORDER);
-			activate = new Button(comp, SWT.CHECK);
-			activate.addSelectionListener(new org.eclipse.swt.events.SelectionAdapter() {
-
-				@Override
-				public void widgetSelected(org.eclipse.swt.events.SelectionEvent e) {
-					final boolean selection = activate.getSelection();
-					enableUI(selection);
-					updateFeatureOrderList();
-					setDirty();
-				}
-			});
-			featureOrderTable = new FeatureOrderTable(comp, this);
-			createGridData();
-			createUpButton();
-			createDownButton();
-			createDeafaultButton();
 		}
 	}
 

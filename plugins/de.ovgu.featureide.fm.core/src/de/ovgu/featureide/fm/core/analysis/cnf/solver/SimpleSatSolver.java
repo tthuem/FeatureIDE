@@ -248,7 +248,7 @@ public class SimpleSatSolver implements ISimpleSatSolver {
 	 */
 	protected void configureSolver(Solver<?> solver) {
 		solver.setTimeoutMs(10_000);
-		solver.setDBSimplificationAllowed(true);
+		solver.setDBSimplificationAllowed(false);
 		solver.setVerbose(false);
 	}
 

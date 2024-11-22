@@ -20,11 +20,14 @@
  */
 package de.ovgu.featureide.ui.properties;
 
+import java.util.Objects;
+
 import org.eclipse.core.expressions.PropertyTester;
 import org.eclipse.core.resources.IResource;
 
 import de.ovgu.featureide.core.CorePlugin;
 import de.ovgu.featureide.core.IFeatureProject;
+import de.ovgu.featureide.core.builder.IComposerExtensionClass;
 import de.ovgu.featureide.fm.ui.handlers.base.SelectionWrapper;
 
 public class ComposerTester extends PropertyTester {
@@ -34,10 +37,14 @@ public class ComposerTester extends PropertyTester {
 		final IResource res = SelectionWrapper.checkClass(receiver, IResource.class);
 		final IFeatureProject featureProject = CorePlugin.getFeatureProject(res);
 		if (featureProject != null) {
-			for (int i = 0; i < args.length; i++) {
-				if (args[i].equals(featureProject.getComposerID())) {
-					return true;
-				}
+			switch (property) {
+			case "composer":
+				return Objects.equals(expectedValue, featureProject.getComposerID());
+			case "partialFeatureProjectBuild":
+				final IComposerExtensionClass composer = featureProject.getComposer();
+				return (composer != null) && composer.supportsPartialFeatureProject();
+			default:
+				throw new IllegalStateException();
 			}
 		}
 		return false;

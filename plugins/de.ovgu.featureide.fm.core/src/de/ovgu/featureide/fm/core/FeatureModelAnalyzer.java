@@ -25,12 +25,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.ovgu.featureide.fm.core.AnalysesCollection.ConstraintAnalysisWrapper;
 import de.ovgu.featureide.fm.core.AnalysesCollection.StringToFeature;
 import de.ovgu.featureide.fm.core.analysis.ConstraintProperties;
 import de.ovgu.featureide.fm.core.analysis.ConstraintProperties.ConstraintStatus;
@@ -75,6 +76,7 @@ import de.ovgu.featureide.fm.core.job.monitor.NullMonitor;
  * @author Soenke Holthusen
  * @author Florian Proksch
  * @author Stefan Krueger
+ * @author Sebastian Krieter
  * @author Marcus Pinnecke (Feature Interface)
  */
 public class FeatureModelAnalyzer implements IEventListener {
@@ -106,149 +108,324 @@ public class FeatureModelAnalyzer implements IEventListener {
 	/**
 	 * Tests if <code>featureModel</code> is valid.
 	 *
-	 * @param monitor - {@link IMonitor}
-	 * @return {@link Boolean}
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @return {@code true} if the feature model is void, {@code false} if the feature model is not void or an error occurred.
 	 */
 	public boolean isValid(IMonitor<Boolean> monitor) {
-		final Boolean result = analysesCollection.validAnalysis.getResult(monitor);
-		if (result == null) {
-			return false;
-		}
-		if (!result) {
+		return isValid(monitor, -1).orElse(Boolean.FALSE);
+	}
+
+	/**
+	 * Tests if <code>featureModel</code> is valid.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @param timeout a timeout in ms
+	 * @return an {@link Optional} containing the analysis result. Empty if a timeout or an error occurred.
+	 */
+	public Optional<Boolean> isValid(IMonitor<Boolean> monitor, int timeout) {
+		final Optional<Boolean> result = analysesCollection.validAnalysis.getResult(monitor, timeout);
+		if (result.isPresent() && !result.get()) {
 			getFeatureModelProperties().setStatus(FeatureModelStatus.VOID);
 		}
 		return result;
 	}
 
+	/**
+	 * Computes a list of all core features.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @return a non-null result list. Empty if an error occurred.
+	 */
 	public List<IFeature> getCoreFeatures(IMonitor<LiteralSet> monitor) {
-		final LiteralSet result = analysesCollection.coreDeadAnalysis.getResult(monitor);
-		if (result == null) {
-			return Collections.emptyList();
-		}
-		return Functional.mapToList(formula.getCNF().getVariables().convertToString(result, true, false, false), new StringToFeature(featureModel));
+		return getCoreFeatures(monitor, -1).orElse(Collections.emptyList());
 	}
 
+	/**
+	 * Computes a list of all dead features.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @return a non-null result list. Empty if an error occurred.
+	 */
 	public List<IFeature> getDeadFeatures(IMonitor<LiteralSet> monitor) {
-		final LiteralSet result = analysesCollection.coreDeadAnalysis.getResult(monitor);
-		if (result == null) {
-			return Collections.emptyList();
-		}
-		return Functional.mapToList(formula.getCNF().getVariables().convertToString(result, false, true, false), new StringToFeature(featureModel));
+		return getDeadFeatures(monitor, -1).orElse(Collections.emptyList());
 	}
 
 	/**
 	 * Returns the list of features that occur in all variants, where one of the given features is selected. If the given list of features is empty, this method
 	 * will calculate the features that are present in all variants specified by the feature model.
 	 *
-	 * @return a list of features that is common to all variants
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @return a non-null result list. Empty if an error occurred.
 	 */
 	public List<IFeature> getCommonFeatures(IMonitor<LiteralSet> monitor) {
-		final LiteralSet result = analysesCollection.coreDeadAnalysis.getResult(monitor);
-		if (result == null) {
-			return Collections.emptyList();
-		}
-		final List<String> variables = formula.getCNF().getVariables().convertToString(result, true, true, false);
-		final Set<IFeature> uncommonFeatures = variables.stream().map(featureModel::getFeature).collect(Collectors.toSet());
-		return featureModel.getFeatures().stream().filter(new FeatureSetFilter(uncommonFeatures).negate()).collect(Collectors.toList());
-	}
-
-	public List<List<IFeature>> getAtomicSets(IMonitor<List<LiteralSet>> monitor) {
-		final List<LiteralSet> result = analysesCollection.atomicSetAnalysis.getResult(monitor);
-		if (result == null) {
-			return Collections.emptyList();
-		}
-
-		final CNF cnf = formula.getCNF();
-		final ArrayList<List<IFeature>> resultList = new ArrayList<>();
-		for (final LiteralSet literalList : result) {
-			final List<IFeature> setList = new ArrayList<>();
-			resultList.add(Functional.mapToList(cnf.getVariables().convertToString(literalList, true, true, false), new StringToFeature(featureModel)));
-
-			for (final int literal : literalList.getLiterals()) {
-				final IFeature feature = featureModel.getFeature(cnf.getVariables().getName(literal));
-				if (feature != null) {
-					setList.add(feature);
-				}
-			}
-
-		}
-		return resultList;
+		return getCommonFeatures(monitor, -1).orElse(Collections.emptyList());
 	}
 
 	/**
-	 * Calculations for indeterminate hidden features
+	 * Computes a list of all atomic sets.
 	 *
-	 * @param monitor a monitor for tracking the progress
-	 * @return a list of indetermined hidden features
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @return a non-null result list. Empty if an error occurred.
+	 */
+	public List<List<IFeature>> getAtomicSets(IMonitor<List<LiteralSet>> monitor) {
+		return getAtomicSets(monitor, -1).orElse(Collections.emptyList());
+	}
+
+	/**
+	 * Computes a list of all indeterminate hidden features.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @return a non-null result list. Empty if an error occurred.
 	 */
 	public List<IFeature> getIndeterminedHiddenFeatures(IMonitor<LiteralSet> monitor) {
-		final LiteralSet result = analysesCollection.determinedAnalysis.getResult(monitor);
-		if (result == null) {
-			return Collections.emptyList();
-		}
-		return Functional.mapToList(formula.getCNF().getVariables().convertToString(result, true, false, false), new StringToFeature(featureModel));
+		return getIndeterminedHiddenFeatures(monitor, -1).orElse(Collections.emptyList());
 	}
 
+	/**
+	 * Computes a list of all false-optional features.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @return a non-null result list. Empty if an error occurred.
+	 */
 	public List<IFeature> getFalseOptionalFeatures(IMonitor<List<LiteralSet>> monitor) {
-		final List<IFeature> optionalFeatures = Functional.filterToList(featureModel.getFeatures(), new OptionalFeatureFilter());
-		final List<LiteralSet> result = getFalseOptionalFeatures(optionalFeatures, monitor);
-
-		final List<IFeature> resultList = new ArrayList<>();
-		int i = 0;
-		for (final LiteralSet iFeature : result) {
-			if (iFeature != null) {
-				resultList.add(optionalFeatures.get(i));
-			}
-			i++;
-		}
-
-		return resultList;
+		return getFalseOptionalFeatures(monitor, -1).orElse(Collections.emptyList());
 	}
 
-	private List<LiteralSet> getFalseOptionalFeatures(final List<IFeature> optionalFeatures, IMonitor<List<LiteralSet>> monitor) {
-		analysesCollection.foAnalysis.setOptionalFeatures(optionalFeatures);
-		final List<LiteralSet> result = analysesCollection.foAnalysis.getResult(monitor);
-		if (result == null) {
-			return Collections.emptyList();
-		}
-		return result;
-	}
-
-	public List<IConstraint> getContradictoryConstraints(IMonitor<List<LiteralSet>> monitor) {
-		return getConstraintAnalysisResults(getVoidConstraints(monitor.subTask(1)), analysesCollection.constraintContradictionAnalysis, monitor);
-	}
-
+	/**
+	 * Computes a list of all void constraints.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @return a non-null result list. Empty if an error occurred.
+	 */
 	public List<IConstraint> getVoidConstraints(IMonitor<List<LiteralSet>> monitor) {
-		return getConstraintAnalysisResults(constraints, analysesCollection.constraintVoidAnalysis, monitor);
+		return getVoidConstraints(monitor, -1).orElse(Collections.emptyList());
 	}
 
-	public List<IConstraint> getTautologyConstraints(IMonitor<List<LiteralSet>> monitor) {
-		return getConstraintAnalysisResults(getRedundantConstraints(monitor.subTask(1)), analysesCollection.constraintTautologyAnalysis, monitor);
-	}
-
+	/**
+	 * Computes a list of all redundant constraints.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @return a non-null result list. Empty if an error occurred.
+	 */
 	public List<IConstraint> getRedundantConstraints(IMonitor<List<LiteralSet>> monitor) {
-		return getConstraintAnalysisResults(constraints, analysesCollection.constraintRedundancyAnalysis, monitor);
+		return getRedundantConstraints(monitor, -1).orElse(Collections.emptyList());
 	}
 
-	private List<IConstraint> getConstraintAnalysisResults(List<IConstraint> constraints, ConstraintAnalysisWrapper<?> analysisWrapper,
-			IMonitor<List<LiteralSet>> monitor) {
-		analysisWrapper.setConstraints(constraints);
-		final List<LiteralSet> result = analysisWrapper.getResult(monitor);
-		if (result == null) {
-			return Collections.emptyList();
-		}
-
-		final List<IConstraint> resultList = new ArrayList<>();
-		for (int i = 0; i < analysisWrapper.getClauseGroupSize().length; i++) {
-			if (result.get(i) != null) {
-				resultList.add(constraints.get(i));
-			}
-		}
-		return resultList;
+	/**
+	 * Computes a list of all contradictory constraints.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @return a non-null result list. Empty if an error occurred.
+	 */
+	public List<IConstraint> getContradictoryConstraints(IMonitor<List<LiteralSet>> monitor) {
+		return getContradictoryConstraints(monitor, -1).orElse(Collections.emptyList());
 	}
 
+	/**
+	 * Computes a list of all tautology constraints.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @return a non-null result list. Empty if an error occurred.
+	 */
+	public List<IConstraint> getTautologyConstraints(IMonitor<List<LiteralSet>> monitor) {
+		return getTautologyConstraints(monitor, -1).orElse(Collections.emptyList());
+	}
+
+	/**
+	 * Computes a list of all constraints with an anomaly (e.g. redundancy).
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @return a non-null result list. Empty if an error occurred.
+	 */
 	public List<IConstraint> getAnomalyConstraints(IMonitor<List<Anomalies>> monitor) {
-		monitor.checkCancel();
+		return getAnomalyConstraints(monitor, -1).orElse(Collections.emptyList());
+	}
+
+	/**
+	 * Computes a list of all constraints with an anomaly (e.g. redundancy). Considers only constraints that are set to true in the given index.
+	 *
+	 * @param relevantConstraint an index indicating which constraints to check. Uses the constraint order of the feature model.
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @return a non-null result list. Empty if an error occurred.
+	 */
+	public List<IConstraint> getAnomalyConstraints(boolean[] relevantConstraint, IMonitor<List<Anomalies>> monitor) {
+		return getAnomalyConstraints(relevantConstraint, monitor, -1).orElse(Collections.emptyList());
+	}
+
+	/**
+	 * Computes a list of all atomic sets.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @return a non-null result list. Empty if an error occurred.
+	 */
+	public List<Map<IFeature, Boolean>> getAtomicSetsMap(IMonitor<List<LiteralSet>> monitor) {
+		return getAtomicSetsMap(monitor, -1).orElse(Collections.emptyList());
+	}
+
+	/**
+	 * Computes a list of all core features.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @param timeout a timeout in ms
+	 * @return an {@link Optional} containing the analysis result. Empty if a timeout or an error occurred.
+	 */
+	public Optional<List<IFeature>> getCoreFeatures(IMonitor<LiteralSet> monitor, int timeout) {
+		return analysesCollection.coreDeadAnalysis.getResult(monitor, timeout).map(list -> convertToFeatureList(list, true, false));
+	}
+
+	/**
+	 * Computes a list of all dead features.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @param timeout a timeout in ms
+	 * @return an {@link Optional} containing the analysis result. Empty if a timeout or an error occurred.
+	 */
+	public Optional<List<IFeature>> getDeadFeatures(IMonitor<LiteralSet> monitor, int timeout) {
+		return analysesCollection.coreDeadAnalysis.getResult(monitor, timeout).map(list -> convertToFeatureList(list, false, true));
+	}
+
+	/**
+	 * Returns the list of features that occur in all variants, where one of the given features is selected. If the given list of features is empty, this method
+	 * will calculate the features that are present in all variants specified by the feature model.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @param timeout a timeout in ms
+	 * @return an {@link Optional} containing the analysis result. Empty if a timeout or an error occurred.
+	 */
+	public Optional<List<IFeature>> getCommonFeatures(IMonitor<LiteralSet> monitor, int timeout) {
+		return analysesCollection.coreDeadAnalysis.getResult(monitor, timeout).map(list -> featureModel.getFeatures().stream()
+				.filter(new FeatureSetFilter(convertToFeatureList(list, true, true)).negate()).collect(Collectors.toList()));
+	}
+
+	/**
+	 * Computes a list of all atomic sets.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @param timeout a timeout in ms
+	 * @return an {@link Optional} containing the analysis result. Empty if a timeout or an error occurred.
+	 */
+	public Optional<List<List<IFeature>>> getAtomicSets(IMonitor<List<LiteralSet>> monitor, int timeout) {
+		return analysesCollection.atomicSetAnalysis.getResult(monitor, timeout).map(list -> {
+			final CNF cnf = formula.getCNF();
+			final ArrayList<List<IFeature>> resultList = new ArrayList<>();
+			for (final LiteralSet literalList : list) {
+				final List<IFeature> setList = new ArrayList<>();
+				resultList.add(convertToFeatureList(literalList, true, true));
+
+				for (final int literal : literalList.getLiterals()) {
+					final IFeature feature = featureModel.getFeature(cnf.getVariables().getName(literal));
+					if (feature != null) {
+						setList.add(feature);
+					}
+				}
+			}
+			return resultList;
+		});
+	}
+
+	/**
+	 * Computes a list of all indeterminate hidden features.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @param timeout a timeout in ms
+	 * @return an {@link Optional} containing the analysis result. Empty if a timeout or an error occurred.
+	 */
+	public Optional<List<IFeature>> getIndeterminedHiddenFeatures(IMonitor<LiteralSet> monitor, int timeout) {
+		return analysesCollection.determinedAnalysis.getResult(monitor, timeout).map(list -> convertToFeatureList(list, true, false));
+	}
+
+	/**
+	 * Computes a list of all false-optional features.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @param timeout a timeout in ms
+	 * @return an {@link Optional} containing the analysis result. Empty if a timeout or an error occurred.
+	 */
+	public Optional<List<IFeature>> getFalseOptionalFeatures(IMonitor<List<LiteralSet>> monitor, int timeout) {
+		final List<IFeature> optionalFeatures = Functional.filterToList(featureModel.getFeatures(), new OptionalFeatureFilter());
+		return getFalseOptionalFeatures(optionalFeatures, monitor, timeout).map(list -> selectPositiveElements(optionalFeatures, list));
+	}
+
+	/**
+	 * Computes a list of all false-optional features, contained in the given list of features.
+	 *
+	 * @param optionalFeatures a list of optional features
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @param timeout a timeout in ms
+	 * @return an {@link Optional} containing the analysis result. Empty if a timeout or an error occurred.
+	 */
+	private Optional<List<LiteralSet>> getFalseOptionalFeatures(final List<IFeature> optionalFeatures, IMonitor<List<LiteralSet>> monitor, int timeout) {
+		analysesCollection.foAnalysis.setOptionalFeatures(optionalFeatures);
+		return analysesCollection.foAnalysis.getResult(monitor, timeout);
+	}
+
+	private List<IFeature> convertToFeatureList(final LiteralSet result, boolean includePositive, boolean includeNegative) {
+		return Functional.mapToList(formula.getCNF().getVariables().convertToString(result, includePositive, includeNegative, false),
+				new StringToFeature(featureModel));
+	}
+
+	/**
+	 * Computes a list of all void constraints.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @param timeout a timeout in ms
+	 * @return an {@link Optional} containing the analysis result. Empty if a timeout or an error occurred.
+	 */
+	public Optional<List<IConstraint>> getVoidConstraints(IMonitor<List<LiteralSet>> monitor, int timeout) {
+		analysesCollection.constraintVoidAnalysis.setConstraints(constraints);
+		return analysesCollection.constraintVoidAnalysis.getResult(monitor, timeout).map(list -> selectPositiveElements(constraints, list));
+	}
+
+	/**
+	 * Computes a list of all redundant constraints.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @param timeout a timeout in ms
+	 * @return an {@link Optional} containing the analysis result. Empty if a timeout or an error occurred.
+	 */
+	public Optional<List<IConstraint>> getRedundantConstraints(IMonitor<List<LiteralSet>> monitor, int timeout) {
+		analysesCollection.constraintRedundancyAnalysis.setConstraints(constraints);
+		return analysesCollection.constraintRedundancyAnalysis.getResult(monitor, timeout).map(list -> selectPositiveElements(constraints, list));
+	}
+
+	/**
+	 * Computes a list of all contradictory constraints.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @param timeout a timeout in ms
+	 * @return an {@link Optional} containing the analysis result. Empty if a timeout or an error occurred.
+	 */
+	public Optional<List<IConstraint>> getContradictoryConstraints(IMonitor<List<LiteralSet>> monitor, int timeout) {
+		final Optional<List<IConstraint>> voidConstraints = getVoidConstraints(monitor != null ? monitor.subTask(1) : null, timeout);
+		return voidConstraints.flatMap(constraints -> {
+			analysesCollection.constraintContradictionAnalysis.setConstraints(constraints);
+			return analysesCollection.constraintContradictionAnalysis.getResult(monitor, timeout).map(list -> selectPositiveElements(constraints, list));
+		});
+	}
+
+	/**
+	 * Computes a list of all tautology constraints.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @param timeout a timeout in ms
+	 * @return an {@link Optional} containing the analysis result. Empty if a timeout or an error occurred.
+	 */
+	public Optional<List<IConstraint>> getTautologyConstraints(IMonitor<List<LiteralSet>> monitor, int timeout) {
+		final Optional<List<IConstraint>> redundantConstraints = getRedundantConstraints(monitor != null ? monitor.subTask(1) : null, timeout);
+		return redundantConstraints.flatMap(constraints -> {
+			analysesCollection.constraintTautologyAnalysis.setConstraints(constraints);
+			return analysesCollection.constraintTautologyAnalysis.getResult(monitor, timeout).map(list -> selectPositiveElements(constraints, list));
+		});
+	}
+
+	/**
+	 * Computes a list of all constraints with an anomaly (e.g. redundancy).
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @param timeout a timeout in ms
+	 * @return an {@link Optional} containing the analysis result. Empty if a timeout or an error occurred.
+	 */
+	public Optional<List<IConstraint>> getAnomalyConstraints(IMonitor<List<Anomalies>> monitor, int timeout) {
 		int i = 0;
 		final boolean[] relevantConstraint = new boolean[constraints.size()];
 		for (final IConstraint constraint : constraints) {
@@ -258,65 +435,87 @@ public class FeatureModelAnalyzer implements IEventListener {
 			}
 			i++;
 		}
-		monitor.checkCancel();
-		return getAnomalyConstraints(relevantConstraint, monitor);
+		return getAnomalyConstraints(relevantConstraint, monitor, timeout);
 	}
 
-	public List<IConstraint> getAnomalyConstraints(boolean[] relevantConstraint, IMonitor<List<Anomalies>> monitor) {
+	/**
+	 * Computes a list of all constraints with an anomaly (e.g. redundancy). Considers only constraints that are set to true in the given index.
+	 *
+	 * @param relevantConstraint an index indicating which constraints to check. Uses the constraint order of the feature model.
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @param timeout a timeout in ms
+	 * @return an {@link Optional} containing the analysis result. Empty if a timeout or an error occurred.
+	 */
+	public Optional<List<IConstraint>> getAnomalyConstraints(boolean[] relevantConstraint, IMonitor<List<Anomalies>> monitor, int timeout) {
 		analysesCollection.constraintAnomaliesAnalysis.setRelevantConstraint(relevantConstraint);
-		final List<Anomalies> result = analysesCollection.constraintAnomaliesAnalysis.getResult(monitor);
-		if ((result == null) || result.isEmpty()) {
-			return Collections.emptyList();
-		}
-
-		final Variables variables = formula.getCNF().getVariables();
-
-		final List<IConstraint> resultList = new ArrayList<>();
-		for (int i = 0; i < analysesCollection.constraintAnomaliesAnalysis.getClauseGroupSize().length; i++) {
-			final Anomalies anomalies = result.get(i);
-			if (anomalies != null) {
-				if (anomalies.getRedundantClauses() != null) {
-					final ArrayList<IFeature> falseOptionalFeatures = new ArrayList<>();
-					for (final LiteralSet literalSet : anomalies.getRedundantClauses()) {
-						if (literalSet != null) {
-							falseOptionalFeatures.add(featureModel.getFeature(variables.getName(literalSet.getLiterals()[1])));
+		return analysesCollection.constraintAnomaliesAnalysis.getResult(monitor, timeout).map(list -> {
+			final List<IConstraint> resultList = new ArrayList<>();
+			final Variables variables = formula.getCNF().getVariables();
+			for (int i = 0; i < analysesCollection.constraintAnomaliesAnalysis.getClauseGroupSize().length; i++) {
+				final Anomalies anomalies = list.get(i);
+				if (anomalies != null) {
+					if (anomalies.getRedundantClauses() != null) {
+						final ArrayList<IFeature> falseOptionalFeatures = new ArrayList<>();
+						for (final LiteralSet literalSet : anomalies.getRedundantClauses()) {
+							if (literalSet != null) {
+								falseOptionalFeatures.add(featureModel.getFeature(variables.getName(literalSet.getLiterals()[1])));
+							}
 						}
+						final IConstraint constraint = constraints.get(i);
+						getConstraintProperties(constraint).setFalseOptionalFeatures(falseOptionalFeatures);
+						resultList.add(constraint);
 					}
-					final IConstraint constraint = constraints.get(i);
-					getConstraintProperties(constraint).setFalseOptionalFeatures(falseOptionalFeatures);
-					resultList.add(constraint);
-				}
-				if (anomalies.getDeadVariables() != null) {
-					final IConstraint constraint = constraints.get(i);
-					getConstraintProperties(constraint).setDeadFeatures(Functional
-							.mapToList(variables.convertToString(anomalies.getDeadVariables(), false, true, false), new StringToFeature(featureModel)));
-					resultList.add(constraint);
+					if (anomalies.getDeadVariables() != null) {
+						final IConstraint constraint = constraints.get(i);
+						getConstraintProperties(constraint).setDeadFeatures(Functional
+								.mapToList(variables.convertToString(anomalies.getDeadVariables(), false, true, false), new StringToFeature(featureModel)));
+						resultList.add(constraint);
+					}
 				}
 			}
-		}
-
-		return resultList;
+			return resultList;
+		});
 	}
 
-	public List<Map<IFeature, Boolean>> getAtomicSetsMap(IMonitor<List<LiteralSet>> monitor) {
-		final Variables variables = formula.getCNF().getVariables();
-		final List<Map<IFeature, Boolean>> resultList = new ArrayList<>();
-		final Set<IFeature> coveredFeatures = new HashSet<>();
+	/**
+	 * Computes a list of all atomic sets.
+	 *
+	 * @param monitor a {@link IMonitor monitor} instance (can be null)
+	 * @param timeout a timeout in ms
+	 * @return an {@link Optional} containing the analysis result. Empty if a timeout or an error occurred.
+	 */
+	public Optional<List<Map<IFeature, Boolean>>> getAtomicSetsMap(IMonitor<List<LiteralSet>> monitor, int timeout) {
+		return analysesCollection.atomicSetAnalysis.getResult(monitor, timeout).map(list -> {
+			final List<Map<IFeature, Boolean>> resultList = new ArrayList<>();
+			final Variables variables = formula.getCNF().getVariables();
+			final Set<IFeature> coveredFeatures = new HashSet<>();
+			for (final LiteralSet literalList : list) {
+				final Map<IFeature, Boolean> setList = new HashMap<>();
 
-		for (final LiteralSet literalList : analysesCollection.atomicSetAnalysis.getResult(monitor)) {
-			final Map<IFeature, Boolean> setList = new HashMap<>();
+				for (final int literal : literalList.getLiterals()) {
+					final IFeature feature = featureModel.getFeature(variables.getName(literal));
+					if ((feature != null) && coveredFeatures.add(feature)) {
+						setList.put(feature, literal > 0);
+					}
+				}
 
-			for (final int literal : literalList.getLiterals()) {
-				final IFeature feature = featureModel.getFeature(variables.getName(literal));
-				if ((feature != null) && coveredFeatures.add(feature)) {
-					setList.put(feature, literal > 0);
+				if (!setList.isEmpty()) {
+					resultList.add(setList);
 				}
 			}
+			return resultList;
+		});
+	}
 
-			if (!setList.isEmpty()) {
-				resultList.add(setList);
+	private static <T> List<T> selectPositiveElements(final List<T> elements, List<?> positiveElements) {
+		final ArrayList<T> resultList = new ArrayList<>();
+		final Iterator<?> positiveIt = positiveElements.iterator();
+		for (final T element : elements) {
+			if (positiveIt.next() != null) {
+				resultList.add(element);
 			}
 		}
+		resultList.trimToSize();
 		return resultList;
 	}
 
@@ -400,12 +599,12 @@ public class FeatureModelAnalyzer implements IEventListener {
 			monitor.checkCancel();
 			final FeatureModelProperties properties = getFeatureModelProperties();
 			if (properties.hasStatus(FeatureModelStatus.VOID)) {
-				final List<IConstraint> voidConstraints = getVoidConstraints(monitor.subTask(2));
+				final List<IConstraint> voidConstraints = getVoidConstraints(monitor.subTask(2), -1).orElse(Collections.emptyList());
 				for (final IConstraint constraint : voidConstraints) {
 					getConstraintProperties(constraint).setStatus(ConstraintStatus.VOID);
 				}
 				monitor.checkCancel();
-				final List<IConstraint> contradictoryConstraints = getContradictoryConstraints(monitor.subTask(2));
+				final List<IConstraint> contradictoryConstraints = getContradictoryConstraints(monitor.subTask(2), -1).orElse(Collections.emptyList());
 				for (final IConstraint constraint : contradictoryConstraints) {
 					getConstraintProperties(constraint).setStatus(ConstraintStatus.UNSATISFIABLE);
 				}
@@ -421,7 +620,7 @@ public class FeatureModelAnalyzer implements IEventListener {
 				}
 
 				monitor.checkCancel();
-				getAnomalyConstraints(monitor.subTask(10));
+				getAnomalyConstraints(monitor.subTask(10), -1);
 			}
 		}
 	}
@@ -443,10 +642,10 @@ public class FeatureModelAnalyzer implements IEventListener {
 
 		switch (status) {
 		case REDUNDANT:
-			annotatedConstraints = getRedundantConstraints(monitor.subTask(2));
+			annotatedConstraints = getRedundantConstraints(monitor.subTask(2), -1).orElse(Collections.emptyList());
 			break;
 		case TAUTOLOGY:
-			annotatedConstraints = getTautologyConstraints(monitor.subTask(2));
+			annotatedConstraints = getTautologyConstraints(monitor.subTask(2), -1).orElse(Collections.emptyList());
 			break;
 		default:
 			annotatedConstraints = Collections.emptyList();
@@ -548,14 +747,14 @@ public class FeatureModelAnalyzer implements IEventListener {
 			if (getFeatureModelProperties().hasStatus(FeatureModelStatus.VOID)) {
 				annotatedFeatures = featureModel.getFeatures();
 			} else {
-				annotatedFeatures = getDeadFeatures(monitor.subTask(1));
+				annotatedFeatures = getDeadFeatures(monitor.subTask(1), -1).orElse(Collections.emptyList());
 			}
 			break;
 		case FALSE_OPTIONAL:
-			annotatedFeatures = getFalseOptionalFeatures(monitor.subTask(1));
+			annotatedFeatures = getFalseOptionalFeatures(monitor.subTask(1), -1).orElse(Collections.emptyList());
 			break;
 		case INDETERMINATE_HIDDEN:
-			annotatedFeatures = getIndeterminedHiddenFeatures(monitor.subTask(1));
+			annotatedFeatures = getIndeterminedHiddenFeatures(monitor.subTask(1), -1).orElse(Collections.emptyList());
 			break;
 		default:
 			annotatedFeatures = Collections.emptyList();

@@ -489,7 +489,11 @@ public class ConfigurationPropagator implements IConfigurationPropagator {
 			for (final int i : impliedFeatures.getLiterals()) {
 				final SelectableFeature feature = configuration.getSelectableFeature(rootNode.getVariables().getName(i));
 				if (feature != null) {
-					configuration.setAutomatic(feature, i > 0 ? Selection.SELECTED : Selection.UNSELECTED);
+					final Selection automatic = i > 0 ? Selection.SELECTED : Selection.UNSELECTED;
+					final Selection manual = feature.getManual();
+					if ((manual == Selection.UNDEFINED) || (manual == automatic)) {
+						feature.setAutomatic(automatic);
+					}
 				}
 			}
 			workMonitor.step(result);

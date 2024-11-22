@@ -436,6 +436,8 @@ public class TikzGraphicalFeatureModelFormat extends APersistentFormat<IGraphica
 				return "magentaColor";
 			case Pink:
 				return "pinkColor";
+			case NO_COLOR:
+				return "";
 			default:
 				throw new IllegalStateException(String.valueOf(featureColor));
 			}
@@ -514,39 +516,39 @@ public class TikzGraphicalFeatureModelFormat extends APersistentFormat<IGraphica
 
 		private void printLegend(StringBuilder str, IGraphicalFeatureModel graphicalFeatureModel) {
 			boolean check = false;
-			final StringBuilder myString = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 			if (legend[0] && legend[1]) {
 				check = true;
-				myString.append("		\\node [abstract,label=right:Abstract Feature] {}; \\\\" + lnSep);
+				sb.append("		\\node [abstract,label=right:Abstract Feature] {}; \\\\" + lnSep);
 				legend[0] = false;
-				myString.append("		\\node [concrete,label=right:Concrete Feature] {}; \\\\" + lnSep);
+				sb.append("		\\node [concrete,label=right:Concrete Feature] {}; \\\\" + lnSep);
 				legend[1] = false;
 			}
 			if (legend[0]) {
 				check = true;
-				myString.append("		\\node [abstract,label=right:Feature] {}; \\\\" + lnSep);
+				sb.append("		\\node [abstract,label=right:Feature] {}; \\\\" + lnSep);
 				legend[0] = false;
 			}
 			if (legend[1]) {
 				check = true;
-				myString.append("		\\node [concrete,label=right:Feature] {}; \\\\" + lnSep);
+				sb.append("		\\node [concrete,label=right:Feature] {}; \\\\" + lnSep);
 				legend[1] = false;
 			}
 			if (legend[2]) {
 				check = true;
-				myString.append("		\\node [mandatory,label=right:Mandatory] {}; \\\\" + lnSep);
+				sb.append("		\\node [mandatory,label=right:Mandatory] {}; \\\\" + lnSep);
 				legend[2] = false;
 			}
 			if (legend[3]) {
 				check = true;
-				myString.append("		\\node [optional,label=right:Optional] {}; \\\\" + lnSep);
+				sb.append("		\\node [optional,label=right:Optional] {}; \\\\" + lnSep);
 				legend[3] = false;
 			}
 			if (legend[4]) {
 				check = true;
 				// myString.append(" \\filldraw[drawColor] (0.45,0.15) ++ (225:0.3) arc[start angle=315,end angle=225,radius=0.2]; " + lnSep
 				// + " \\node [or,label=right:Or] {}; \\\\" + lnSep);
-				myString.append("			\\filldraw[drawColor] (0.1,0) - +(-0,-0.2) - +(0.2,-0.2)- +(0.1,0);" + lnSep
+				sb.append("			\\filldraw[drawColor] (0.1,0) - +(-0,-0.2) - +(0.2,-0.2)- +(0.1,0);" + lnSep
 					+ "			\\draw[drawColor] (0.1,0) -- +(-0.2, -0.4);" + lnSep + "			\\draw[drawColor] (0.1,0) -- +(0.2,-0.4);" + lnSep
 					+ "			\\fill[drawColor] (0,-0.2) arc (240:300:0.2);" + lnSep + "		\\node [or,label=right:Or Group] {}; \\\\");
 				legend[4] = false;
@@ -555,28 +557,27 @@ public class TikzGraphicalFeatureModelFormat extends APersistentFormat<IGraphica
 				check = true;
 				// myString.append(" \\draw[drawColor] (0.45,0.15) ++ (225:0.3) arc[start angle=315,end angle=225,radius=0.2] -- cycle; " + lnSep
 				// + " \\node [alternative,label=right:Alternative] {}; \\\\" + lnSep);
-				myString.append("			\\draw[drawColor] (0.1,0) -- +(-0.2, -0.4);" + lnSep + "			\\draw[drawColor] (0.1,0) -- +(0.2,-0.4);"
-					+ lnSep + "			\\draw[drawColor] (0,-0.2) arc (240:300:0.2);" + lnSep
-					+ "		\\node [alternative,label=right:Alternative Group] {}; \\\\");
+				sb.append("			\\draw[drawColor] (0.1,0) -- +(-0.2, -0.4);" + lnSep + "			\\draw[drawColor] (0.1,0) -- +(0.2,-0.4);" + lnSep
+					+ "			\\draw[drawColor] (0,-0.2) arc (240:300:0.2);" + lnSep + "		\\node [alternative,label=right:Alternative Group] {}; \\\\");
 				legend[5] = false;
 			}
 			if (legend[6]) {
 				check = true;
-				myString.append("		\\node [hiddenNodes,label=center:1,label=right:Collapsed Nodes] {}; \\\\" + lnSep);
+				sb.append("		\\node [hiddenNodes,label=center:1,label=right:Collapsed Nodes] {}; \\\\" + lnSep);
 				legend[6] = false;
 			}
 
 			final ColorScheme colorScheme = FeatureColorManager.getCurrentColorScheme(graphicalFeatureModel.getFeatureModelManager().getSnapshot());
 			int colorIndex = 1;
 
-			if (!colorScheme.getColors().isEmpty()) {
-				for (final FeatureColor currentColor : new HashSet<>(colorScheme.getColors().values())) {
+			for (final FeatureColor currentColor : new HashSet<>(colorScheme.getColors().values())) {
+				if (currentColor != FeatureColor.NO_COLOR) {
 					String meaning = currentColor.getMeaning();
 					if (meaning.isEmpty()) {
 						meaning = "Custom Color " + String.format("%02d", colorIndex);
 						colorIndex++;
 					}
-					myString.append("		\\node [" + featureColorToTikzStyle(currentColor) + ",label=right:" + meaning + "] {}; \\\\" + lnSep);
+					sb.append("		\\node [" + featureColorToTikzStyle(currentColor) + ",label=right:" + meaning + "] {}; \\\\" + lnSep);
 				}
 			}
 
@@ -584,7 +585,7 @@ public class TikzGraphicalFeatureModelFormat extends APersistentFormat<IGraphica
 				str.append("	\\matrix [anchor=north west] at (current bounding box.north east) {" + lnSep + "		\\node [placeholder] {}; \\\\" + lnSep
 					+ "	};" + lnSep + "	\\matrix [draw=drawColor,anchor=north west] at (current bounding box.north east) {" + lnSep
 					+ "		\\node [label=center:\\underline{Legend:}] {}; \\\\" + lnSep);
-				str.append(myString);
+				str.append(sb);
 				str.append("	};" + lnSep);
 				check = false;
 			} else {

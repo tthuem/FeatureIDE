@@ -21,7 +21,6 @@
 package de.ovgu.featureide.core.images;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,7 +30,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.eclipse.core.resources.IFolder;
-import org.eclipse.core.runtime.CoreException;
 
 import de.ovgu.featureide.core.builder.ComposerExtensionClass;
 import de.ovgu.featureide.fm.core.base.IFeature;
@@ -153,14 +151,4 @@ public class ImagesComposer extends ComposerExtensionClass {
 		return orderedFeatures;
 	}
 
-	@Override
-	public boolean supportsPartialFeatureProject() {
-		return false;
-	}
-
-	@Override
-	public void buildPartialFeatureProjectAssets(IFolder sourceFolder, ArrayList<String> removedFeatures, ArrayList<String> mandatoryFeatures)
-			throws IOException, CoreException {
-
-	}
 }
