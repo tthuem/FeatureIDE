@@ -1376,14 +1376,7 @@
 				class="de.ovgu.featureide.ui.properties.ComposerTester"
 				id="de.ovgu.featureide.fm.ui.propertytester.composer"
 				namespace="de.ovgu.featureide.fm.ui.properties"
-				properties="composer"
-				type="java.lang.Object">
-		</propertyTester>
-		<propertyTester
-				class="de.ovgu.featureide.ui.properties.ComposerTester"
-				id="de.ovgu.featureide.fm.ui.propertytester.partialFeatureProjectBuild"
-				namespace="de.ovgu.featureide.fm.ui.properties"
-				properties="partialFeatureProjectBuild"
+				properties="composer,partialFeatureProjectBuild"
 				type="java.lang.Object">
 		</propertyTester>
 		<propertyTester
