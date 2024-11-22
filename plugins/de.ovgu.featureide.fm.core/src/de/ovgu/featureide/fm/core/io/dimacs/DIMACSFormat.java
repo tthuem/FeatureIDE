@@ -23,6 +23,7 @@ package de.ovgu.featureide.fm.core.io.dimacs;
 import java.io.IOException;
 import java.io.StringReader;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -127,15 +128,18 @@ public class DIMACSFormat extends AFeatureModelFormat {
 
 	@Override
 	public String write(IFeatureModel featureModel) {
-		final Variables variables = new Variables(FeatureUtils.getFeatureNamesList(featureModel));
-		final CNF cnf = new CNF(variables);
 		final AdvancedNodeCreator nodeCreator = new AdvancedNodeCreator(featureModel);
+		List<String> featureNamesList = FeatureUtils.getFeatureNamesList(featureModel);
 		if (omitDummyRoot) {
 			final IFeatureStructure root = featureModel.getStructure().getRoot();
 			if ((root != null) && DUMMY_ROOT_NAME.equals(root.getFeature().getName())) {
 				nodeCreator.setOmitRoot(omitDummyRoot);
+				featureNamesList = new ArrayList<>(featureNamesList);
+				featureNamesList.remove(DUMMY_ROOT_NAME);
 			}
 		}
+		final Variables variables = new Variables(featureNamesList);
+		final CNF cnf = new CNF(variables);
 		cnf.addClauses(Nodes.convert(variables, nodeCreator.createNodes()));
 		final DimacsWriter w = new DimacsWriter(cnf);
 		w.setWritingVariableDirectory(true);
