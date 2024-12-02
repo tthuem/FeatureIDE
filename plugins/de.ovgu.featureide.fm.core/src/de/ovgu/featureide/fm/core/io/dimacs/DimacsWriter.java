@@ -38,6 +38,8 @@ public class DimacsWriter {
 
 	private final CNF cnf;
 
+	private final LiteralSet projectionVariables;
+
 	/**
 	 * Constructs a new instance of this class with the given CNF.
 	 *
@@ -45,10 +47,21 @@ public class DimacsWriter {
 	 * @throws IllegalArgumentException if the input is null or not in CNF
 	 */
 	public DimacsWriter(CNF cnf) throws IllegalArgumentException {
+		this(cnf, null);
+	}
+
+	/**
+	 * Constructs a new instance of this class with the given CNF and variables to project on
+	 *
+	 * @param cnf the CNF to write into the file
+	 * @param projectionVariables the variables that should be projected on
+	 */
+	public DimacsWriter(CNF cnf, LiteralSet projectionVariables) {
 		if (cnf == null) {
 			throw new IllegalArgumentException();
 		}
 		this.cnf = cnf;
+		this.projectionVariables = projectionVariables.clone();
 	}
 
 	/**
@@ -77,6 +90,7 @@ public class DimacsWriter {
 		if (writingVariableDirectory) {
 			writeVariableDirectory(sb);
 		}
+		writeProjectionLine(sb);
 		writeProblem(sb);
 		writeClauses(sb);
 		return sb.toString();
@@ -122,6 +136,27 @@ public class DimacsWriter {
 		sb.append(cnf.getVariables().size());
 		sb.append(' ');
 		sb.append(cnf.getClauses().size());
+		sb.append(System.lineSeparator());
+	}
+
+	/**
+	 * Writes the projection line in the format c p show v1 v2 ... The listed variables are kept when performing operations based on projection on the DIMACS,
+	 * such as projected model counting or projected compilation.
+	 *
+	 * @param sb string builder that builds the document
+	 */
+	private void writeProjectionLine(StringBuilder sb) {
+		if (projectionVariables == null) {
+			return;
+		}
+		sb.append(DIMACSConstants.COMMENT_START);
+		sb.append(' ');
+		sb.append(DIMACSConstants.PROJECTION);
+		sb.append(' ');
+		for (final int variable : projectionVariables.getLiterals()) {
+			sb.append(' ');
+			sb.append(variable);
+		}
 		sb.append(System.lineSeparator());
 	}
 
