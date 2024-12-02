@@ -20,8 +20,6 @@
  */
 package de.ovgu.featureide.fm.core.io.dimacs;
 
-import java.util.List;
-
 import org.prop4j.Node;
 
 import de.ovgu.featureide.fm.core.analysis.cnf.CNF;
@@ -40,7 +38,7 @@ public class DimacsWriter {
 
 	private final CNF cnf;
 
-	private final List<Integer> projectionVariables;
+	private final LiteralSet projectionVariables;
 
 	/**
 	 * Constructs a new instance of this class with the given CNF.
@@ -58,12 +56,12 @@ public class DimacsWriter {
 	 * @param cnf the CNF to write into the file
 	 * @param projectionVariables the variables that should be projected on
 	 */
-	public DimacsWriter(CNF cnf, List<Integer> projectionVariables) {
+	public DimacsWriter(CNF cnf, LiteralSet projectionVariables) {
 		if (cnf == null) {
 			throw new IllegalArgumentException();
 		}
 		this.cnf = cnf;
-		this.projectionVariables = projectionVariables;
+		this.projectionVariables = projectionVariables.clone();
 	}
 
 	/**
@@ -155,8 +153,9 @@ public class DimacsWriter {
 		sb.append(' ');
 		sb.append(DIMACSConstants.PROJECTION);
 		sb.append(' ');
-		for (final Integer variable : projectionVariables) {
-			sb.append(' ' + variable);
+		for (final int variable : projectionVariables.getLiterals()) {
+			sb.append(' ');
+			sb.append(variable);
 		}
 		sb.append(System.lineSeparator());
 	}
