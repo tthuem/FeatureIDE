@@ -142,9 +142,10 @@ public class DimacsWriter {
 	}
 
 	/**
-	 * Writes the projection line in the format c p show v1 v2 ...
+	 * Writes the projection line in the format c p show v1 v2 ... The listed variables are kept when performing operations based on projection on the DIMACS,
+	 * such as projected model counting or projected compilation.
 	 *
-	 * @param sb
+	 * @param sb string builder that builds the document
 	 */
 	private void writeProjectionLine(StringBuilder sb) {
 		if (projectionVariables == null) {
