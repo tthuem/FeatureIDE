@@ -201,11 +201,30 @@ public class UVLFeatureModelFormat extends AFeatureModelFormat {
 			fm.addAttribute(uvlFeature.getReferenceFromSpecificSubmodel(""), NS_ATTRIBUTE_FEATURE, uvlFeature.getRelatedImport().getNamespace());
 		}
 
-		for (final Group group : uvlFeature.getChildren()) {
-			parseGroup(fm, group, feature);
+		if (uvlFeature.getChildren().size() == 1) {
+			parseGroup(fm, uvlFeature.getChildren().get(0), feature);
+		} else {
+			feature.getStructure().setAnd();
+			for (final Group group : uvlFeature.getChildren()) {
+				final MultiFeature groupParent = factory.createFeature(fm, getGroupFeatureName(fm, feature, group));
+				fm.addFeature(groupParent);
+				groupParent.getStructure().setAbstract(true);
+				groupParent.getStructure().setMandatory(true);
+				feature.getStructure().addChild(groupParent.getStructure());
+				parseGroup(fm, group, groupParent);
+			}
 		}
 
 		return feature;
+	}
+
+	private String getGroupFeatureName(IFeatureModel featureModel, IFeature parentFeature, Group group) {
+		int index = 0;
+		String name = parentFeature.getName() + "_" + group.GROUPTYPE.toString() + "_" + index;
+		while (featureModel.getFeature(name) != null) {
+			name = group.GROUPTYPE.toString() + "_" + ++index;
+		}
+		return name;
 	}
 
 	private void parseGroup(MultiFeatureModel fm, Group uvlGroup, IFeature parentFeature) {
