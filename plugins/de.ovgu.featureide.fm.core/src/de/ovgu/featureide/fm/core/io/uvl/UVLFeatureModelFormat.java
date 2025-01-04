@@ -222,7 +222,7 @@ public class UVLFeatureModelFormat extends AFeatureModelFormat {
 		int index = 0;
 		String name = parentFeature.getName() + "_" + group.GROUPTYPE.toString() + "_" + index;
 		while (featureModel.getFeature(name) != null) {
-			name = group.GROUPTYPE.toString() + "_" + ++index;
+			name = parentFeature.getName() + "_" + group.GROUPTYPE.toString() + "_" + ++index;
 		}
 		return name;
 	}
